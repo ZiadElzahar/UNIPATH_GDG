@@ -3,43 +3,37 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 from datetime import datetime
-#from .data import academic_advisors, year_1_students, year_2_students, year_3_students, year_4_students , doctors_data
+from data import academic_advisors, year_1_students, year_2_students, year_3_students, year_4_students , doctors_data
+
+
 
 
 class AcademicAdvisorSystem:
     def __init__(self):
-        self.advisors_df = None
-        self.students_data = {}
+        # No longer need to load from files inside the class
+        self.advisors_df = academic_advisors
+        self.students_data = {
+            'Year_1': year_1_students,
+            'Year_2': year_2_students,
+            'Year_3': year_3_students,
+            'Year_4': year_4_students
+        }
         self.current_advisor = None
-        self.load_data()
-    
-    def load_data(self):
-        """Load all required datasets"""
-        try:
-            # Load advisors data
-            self.advisors_df = pd.read_csv('academic_advisors.csv')
-            
-            # Load student data for all 4 years
-            years = ['Year_1_Students.csv', 'Year_2_Students.csv', 
-                    'Year_3_Students.csv', 'Year_4_Students.csv']
-            
-            for year_file in years:
-                try:
-                    df = pd.read_csv(year_file)
-                    year_num = year_file.split('_')[1]
-                    self.students_data[f'Year_{year_num}'] = df
-                except FileNotFoundError:
-                    print(f"Warning: {year_file} not found. Continuing without this year's data.")
-            
-            print("✓ All data loaded successfully")
-        except Exception as e:
-            print(f"Error loading data: {e}")
+        
+        # Check if data is imported successfully
+        self._validate_imports()
+
+    def _validate_imports(self):
+        """Internal method to ensure all dataframes are ready"""
+        if self.advisors_df is None or not self.students_data:
+            print("ERROR: Data integration failed! Please check data/loaders.py")
             sys.exit(1)
+        print("OK: All external data integrated successfully")
     
     def login(self):
         """Secure login system for academic advisors"""
         print("\n" + "="*50)
-        print("🎓 ACADEMIC ADVISOR LOGIN SYSTEM")
+        print("ACADEMIC ADVISOR LOGIN SYSTEM")
         print("="*50)
         
         while True:
@@ -50,7 +44,7 @@ class AcademicAdvisorSystem:
                 advisor_row = self.advisors_df[self.advisors_df['Advisor_ID'] == advisor_id]
                 
                 if advisor_row.empty:
-                    print("❌ Advisor ID not found in system!")
+                    print("ERROR: Advisor ID not found in system!")
                     choice = input("Try again? (y/n): ").lower()
                     if choice != 'y':
                         print("\nReturning to Managers Portal...")
@@ -62,8 +56,7 @@ class AcademicAdvisorSystem:
                 advisor_name = advisor_row['Advisor_Name'].values[0]
                 
                 # Request verification code
-                print(f"\n🔐 Verification required for Dr. {advisor_name}")
-                print(f"Hint: Your unique code equals your current student count")
+                print(f"\nVerification required for Dr. {advisor_name}")
                 verification_code = int(input("Enter verification code: "))
                 
                 # Validate code
@@ -73,18 +66,18 @@ class AcademicAdvisorSystem:
                         'name': advisor_name,
                         'student_count': expected_code
                     }
-                    print(f"\n✅ Welcome, Dr. {advisor_name}!")
+                    print(f"\nWelcome, Dr. {advisor_name}!")
                     print(f"You are supervising {expected_code} students.")
                     return True
                 else:
-                    print(f"❌ Verification failed! Expected code: {expected_code}")
+                    print(f"Verification failed! Expected code: {expected_code}")
                     choice = input("Try again? (y/n): ").lower()
                     if choice != 'y':
                         print("\nReturning to Managers Portal...")
                         return False
                     
             except ValueError:
-                print("❌ Please enter valid numeric values!")
+                print("Please enter valid numeric values!")
             except KeyboardInterrupt:
                 print("\n\nOperation cancelled by user. Exiting system...")
                 sys.exit(0)
@@ -109,11 +102,11 @@ class AcademicAdvisorSystem:
         students_df = self.get_advisor_students()
         
         if students_df.empty:
-            print("\n❌ No students found under your supervision!")
+            print("\nNo students found under your supervision!")
             return
         
         print("\n" + "="*60)
-        print(f"📊 DASHBOARD: Dr. {self.current_advisor['name']}")
+        print(f"DASHBOARD: Dr. {self.current_advisor['name']}")
         print(f"Total Students: {len(students_df)} | Academic Year: {datetime.now().year}")
         print("="*60)
         
@@ -169,6 +162,8 @@ class AcademicAdvisorSystem:
                     if pd.notna(row[col]):
                         try:
                             att_value = float(str(row[col]).replace('%', ''))
+                            if np.isnan(att_value):
+                                continue
                             if att_value < 60:
                                 at_risk += 1
                                 break
@@ -205,7 +200,7 @@ class AcademicAdvisorSystem:
     
     def print_summary_statistics(self, df):
         """Print key statistics for advisor"""
-        print("\n📈 KEY STATISTICS:")
+        print("\nKEY STATISTICS:")
         print("-" * 60)
         print(f"Total Students: {len(df)}")
         print(f"Average CGPA: {df['CGPA'].mean():.2f}")
@@ -236,6 +231,8 @@ class AcademicAdvisorSystem:
                 if pd.notna(row[col]):
                     try:
                         att_value = float(str(row[col]).replace('%', ''))
+                        if np.isnan(att_value):
+                            continue
                         if att_value < 60:
                             at_risk += 1
                             break
@@ -251,55 +248,61 @@ class AcademicAdvisorSystem:
         student = students_df[students_df['Student_ID'] == student_id]
         
         if student.empty:
-            print(f"\n❌ Student ID {student_id} not found in your supervision list!")
+            print(f"\nStudent ID {student_id} not found in your supervision list!")
             return False
         
         student = student.iloc[0]
         print("\n" + "="*60)
-        print(f"👤 STUDENT PROFILE: {student['Name']} (ID: {student_id})")
+        print(f"STUDENT PROFILE: {student['Name']} (ID: {student_id})")
         print("="*60)
         
         # Basic info
-        print(f"\n📚 Academic Year: {student['Academic_Year']}")
-        print(f"💰 Payment Status: {student['Payment_Status']}")
-        print(f"📊 Current CGPA: {student['CGPA']:.2f}")
+        print(f"\nAcademic Year: {student['Academic_Year']}")
+        print(f"Payment Status: {student['Payment_Status']}")
+        print(f"Current CGPA: {student['CGPA']:.2f}")
         
         # Locked courses check
         locked = student['Locked_Courses']
         if pd.notna(locked) and locked not in ['None', 'None (Ready to Graduate)']:
-            print(f"\n⚠️  LOCKED COURSES:")
+            print(f"\nLOCKED COURSES:")
             for course in str(locked).split(','):
-                print(f"   • {course.strip()}")
+                print(f"   - {course.strip()}")
         else:
-            print("\n✅ No locked courses")
+            print("\nNo locked courses")
         
         # Attendance analysis with warnings
-        print("\n📉 ATTENDANCE ANALYSIS:")
+        print("\nATTENDANCE ANALYSIS:")
         print("-" * 60)
         attendance_issues = []
-        attendance_cols = [col for col in student.index if '_Attendance' in col and col != 'Locked_Courses']
+        # Only consider attendance columns that actually have a value for this student
+        attendance_cols = [col for col in student.index if '_Attendance' in col and pd.notna(student[col]) and str(student[col]).strip().lower() not in ('nan', 'none', '')]
         
         for col in attendance_cols:
             course_name = col.replace('_Attendance', '')
-            att_str = str(student[col])
+            att_str = str(student[col]).strip()
             
             try:
                 att_value = float(att_str.replace('%', ''))
-                status = "✅" if att_value >= 60 else "❌"
-                print(f"{status} {course_name}: {att_value}%")
-                
+                # Skip NaN results coming from strings like 'nan' or similar
+                if np.isnan(att_value):
+                    print(f"{course_name}: {att_str} (Invalid format)")
+                    continue
+
+                status = "OK" if att_value >= 60 else "WARN"
+                print(f"{status} {course_name}: {att_value:.1f}%")
+
                 if att_value < 60:
                     attendance_issues.append((course_name, att_value))
-            except:
-                print(f"⚠️  {course_name}: {att_str} (Invalid format)")
+            except Exception:
+                print(f"{course_name}: {att_str} (Invalid format)")
         
         # Show warnings if attendance issues exist
         if attendance_issues:
             print("\n" + "!"*60)
-            print("🚨 ATTENDANCE WARNING: Student has critical attendance issues!")
+            print("ATTENDANCE WARNING: Student has critical attendance issues!")
             print("!"*60)
             for course, att in attendance_issues:
-                print(f"   • {course}: {att}% (< 60% minimum required)")
+                print(f"   - {course}: {att}% (< 60% minimum required)")
             print("\nRecommended action: Schedule immediate meeting with student")
         
         # Grade visualization
@@ -316,7 +319,7 @@ class AcademicAdvisorSystem:
                     continue
             
             if grades:
-                print(f"\n📈 Grade Summary:")
+                print("\nGrade Summary:")
                 print(f"   Average Grade: {np.mean(grades):.1f}%")
                 print(f"   Highest Grade: {max(grades):.1f}%")
                 print(f"   Lowest Grade: {min(grades):.1f}%")
@@ -328,7 +331,7 @@ class AcademicAdvisorSystem:
         grade_cols = [col for col in student.index if '_Grade' in col and 'CGPA' not in col]
         
         if not grade_cols:
-            print("\n⚠️  No grade data available for visualization")
+            print("\nNo grade data available for visualization")
             return
         
         grades = []
@@ -344,7 +347,7 @@ class AcademicAdvisorSystem:
                 continue
         
         if not grades:
-            print("\n⚠️  No valid grade data available for visualization")
+            print("\nNo valid grade data available for visualization")
             return
         
         plt.figure(figsize=(10, 6))
@@ -376,11 +379,11 @@ class AcademicAdvisorSystem:
         students_df = self.get_advisor_students()
         
         if students_df.empty:
-            print("\n❌ No students to analyze!")
+            print("\nNo students to analyze!")
             return
         
         print("\n" + "="*60)
-        print("⚠️  AT-RISK STUDENTS REPORT")
+        print("AT-RISK STUDENTS REPORT")
         print("="*60)
         
         risk_students = []
@@ -406,6 +409,8 @@ class AcademicAdvisorSystem:
                 if pd.notna(row[col]):
                     try:
                         att_value = float(str(row[col]).replace('%', ''))
+                        if np.isnan(att_value):
+                            continue
                         if att_value < 60:
                             risk_factors.append(f"Low attendance in {col.replace('_Attendance', '')} ({att_value:.0f}%)")
                             break
@@ -421,7 +426,7 @@ class AcademicAdvisorSystem:
                 })
         
         if not risk_students:
-            print("\n✅ No at-risk students identified. All students are performing adequately!")
+            print("\nNo at-risk students identified. All students are performing adequately!")
             return
         
         print(f"\nFound {len(risk_students)} students requiring attention:\n")
@@ -429,7 +434,7 @@ class AcademicAdvisorSystem:
         for i, student in enumerate(risk_students, 1):
             print(f"{i}. {student['Name']} (ID: {student['ID']}) | CGPA: {student['CGPA']:.2f}")
             for risk in student['Risks']:
-                print(f"   • {risk}")
+                print(f"   - {risk}")
             print()
     
     def run(self):
@@ -439,7 +444,7 @@ class AcademicAdvisorSystem:
         
         while True:
             print("\n" + "="*60)
-            print("🎓 ACADEMIC ADVISOR PORTAL")
+            print("ACADEMIC ADVISOR PORTAL")
             print("="*60)
             print("\nSelect an option:")
             print("1. View Dashboard Overview")
@@ -458,29 +463,29 @@ class AcademicAdvisorSystem:
                         student_id = int(input("\nEnter Student ID: "))
                         self.view_student_profile(student_id)
                     except ValueError:
-                        print("❌ Invalid Student ID format!")
+                        print("Invalid Student ID format!")
                 elif choice == '3':
                     self.generate_risk_report()
                 elif choice == '4':
                     self.export_student_list()
                 elif choice == '5':
-                    print(f"\n👋 Goodbye, Dr. {self.current_advisor['name']}!")
+                    print(f"\nGoodbye, Dr. {self.current_advisor['name']}!")
                     break
                 else:
-                    print("❌ Invalid choice. Please select 1-5.")
+                    print("Invalid choice. Please select 1-5.")
                     
             except KeyboardInterrupt:
                 print("\n\nSystem interrupted by user. Exiting...")
                 break
             except Exception as e:
-                print(f"\n❌ An error occurred: {e}")
+                print(f"\nAn error occurred: {e}")
     
     def export_student_list(self):
         """Export student list to CSV file"""
         students_df = self.get_advisor_students()
         
         if students_df.empty:
-            print("\n❌ No students to export!")
+            print("\nNo students to export!")
             return
         
         filename = f"advisor_{self.current_advisor['id']}_students_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
@@ -488,9 +493,9 @@ class AcademicAdvisorSystem:
         
         try:
             students_df[export_cols].to_csv(filename, index=False)
-            print(f"\n✅ Student list exported successfully to '{filename}'")
+            print(f"\nStudent list exported successfully to '{filename}'")
         except Exception as e:
-            print(f"\n❌ Error exporting file: {e}")
+            print(f"\nError exporting file: {e}")
 
 
 # Run the system
