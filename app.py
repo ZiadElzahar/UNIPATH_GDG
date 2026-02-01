@@ -1,6 +1,8 @@
 import streamlit as st
 import json
 import numpy as np
+import os
+import requests
 from sentence_transformers import SentenceTransformer
 import faiss
 
@@ -11,20 +13,67 @@ st.set_page_config(
     layout="wide"
 )
 
-# ==================== تحميل البيانات ====================
+# ==================== إعدادات Gemini API (في الشريط الجانبي) ====================
+with st.sidebar:
+    st.title("⚙️ إعدادات Gemini")
+    
+    # إدخال مفتاح API
+    gemini_api_key = st.text_input(
+        "مفتاح Google AI Studio API:",
+        type="password",
+        value=os.environ.get("GOOGLE_API_KEY", ""),
+        help="احصل على مفتاح من: https://aistudio.google.com/app/apikey"
+    )
+    #AIzaSyCT2FlqNMst9D18XYj_yhJK-bRzoJOJtpg
+
+    # اختيار النموذج
+    gemini_model = st.selectbox(
+        "اختر نموذج Gemini:",
+        ["gemini-2.5-flash"],
+        index=0
+    )
+    
+    st.markdown("---")
+    st.caption("النظام مبني على لائحة الساعات المعتمدة 2021")
+
+# ==================== تحميل نظام RAG ====================
 @st.cache_resource
-def load_data():
+def load_rag_system():
+    # البحث عن ملف البيانات
+    possible_paths = [
+        "rag_dataset_fixed.json",
+        os.path.join(os.path.dirname(__file__), "rag_dataset_fixed.json"),
+        os.path.join(os.getcwd(), "rag_dataset_fixed.json"),
+    ]
+    
+    json_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            json_path = path
+            break
+    
+    if json_path is None:
+        st.error(f"""
+        ❌ لم يتم العثور على ملف البيانات!
+        
+        الملف المطلوب: `rag_dataset_fixed.json`
+        المجلد الحالي: `{os.getcwd()}`
+        
+        الحل:
+        1. ضع الملف في نفس مجلد `app.py`
+        2. أو غيّر مكان تشغيل التطبيق إلى المجلد الصحيح
+        """)
+        st.stop()
+    
     # تحميل البيانات
-    with open("rag_dataset_fixed.json", "r", encoding="utf-8") as f:
+    with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     
     texts = [chunk['text'] for chunk in data]
     metadata = [chunk.get('metadata', {}) for chunk in data]
     
-    # تحميل نموذج التضمين
+    # تحميل نموذج التضمين (يدعم العربية)
     model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-    
-    # إنشاء التضمينات
     embeddings = model.encode(texts, show_progress_bar=False)
     
     # بناء فهرس FAISS
@@ -40,101 +89,221 @@ def load_data():
     }
 
 # ==================== دالة الاسترجاع ====================
-def retrieve(query, k=3):
-    query_emb = data_dict['model'].encode([query])
-    distances, indices = data_dict['index'].search(np.array(query_emb).astype('float32'), k)
+def retrieve_chunks(query, k=5):
+    query_emb = st.session_state.rag_system['model'].encode([query])
+    distances, indices = st.session_state.rag_system['index'].search(
+        np.array(query_emb).astype('float32'), k
+    )
     
     results = []
     for i, idx in enumerate(indices[0]):
         results.append({
-            'text': data_dict['texts'][idx],
+            'text': st.session_state.rag_system['texts'][idx],
             'score': float(1 / (1 + distances[0][i])),
-            'metadata': data_dict['metadata'][idx],
+            'metadata': st.session_state.rag_system['metadata'][idx],
             'index': int(idx)
         })
     return results
 
-# ==================== واجهة المستخدم ====================
-st.title("🎓 مستشار أكاديمي ذكي")
-st.markdown("**كلية العلوم - جامعة حلوان**")
+# ==================== دالة توليد الإجابة عبر Gemini ====================
+def generate_answer_gemini(query, chunks, api_key, model="gemini-1.5-flash"):
+    # تنسيق السياق من المقاطع المسترجعة (مع تحديد الطول لتجنب تجاوز الحد)
+    context = "\n\n".join([
+        f"[مصدر {i+1}] {chunk['text'][:1000]}"  # حد 1000 حرف لكل مقطع
+        for i, chunk in enumerate(chunks[:5])  # أقصى 5 مقاطع
+    ])
+    
+    # صياغة البرومبت المحسّن للعربية ولائحة جامعة حلوان
+    prompt = f"""أنت مستشار أكاديمي خبير في لائحة الساعات المعتمدة لكلية العلوم بجامعة حلوان (اللائحة المعتمدة بقرار وزير التعليم العالي رقم 3257 لسنة 2021).
+
+المعلومات المرجعية من اللائحة الأكاديمية:
+{context}
+
+السؤال:
+{query}
+
+تعليمات هامة:
+1. استند فقط على المعلومات المرجعية أعلاه
+2. إذا لم تجد إجابة كافية، قل: "لم أجد معلومات كافية في اللائحة الأكاديمية الحالية"
+3. كن دقيقاً وواضحاً ومختصراً 
+4. لا تختلق معلومات خارج السياق المقدم
+
+الإجابة:"""
+
+    try:
+        # استدعاء Gemini API
+        url = f"https://generativelanguage.googleapis.com/v1/models/{model}:generateContent?key={api_key}"
+        
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "temperature": 0.2,
+                "maxOutputTokens": 800,
+                "topP": 0.9
+            }
+        }
+        
+        response = requests.post(
+            url,
+            headers={"Content-Type": "application/json"},
+            json=payload,
+            timeout=30
+        )
+        
+        response.raise_for_status()
+        result = response.json()
+        
+        # استخراج النص من الاستجابة
+        if "candidates" in result and len(result["candidates"]) > 0:
+            return result["candidates"][0]["content"]["parts"][0]["text"].strip()
+        else:
+            return "⚠️ لم يتم توليد إجابة من النموذج (استجابة فارغة)"
+    
+    except requests.exceptions.RequestException as e:
+        error_msg = str(e)
+        if "400" in error_msg:
+            return "❌ خطأ: طلب غير صالح (قد يكون المفتاح غير صحيح)"
+        elif "403" in error_msg:
+            return "❌ خطأ: مفتاح API غير مصرح به أو منتهي الصلاحية"
+        elif "429" in error_msg:
+            return "⚠️ تم تجاوز حد الاستخدام. يرجى المحاولة لاحقاً."
+        else:
+            return f"⚠️ خطأ في الاتصال بـ Gemini: {str(e)[:150]}"
+    except Exception as e:
+        return f"⚠️ خطأ غير متوقع: {str(e)[:150]}"
+
+# ==================== تهيئة النظام ====================
+if 'rag_system' not in st.session_state:
+    with st.spinner("جاري تحميل النظام الأكاديمي..."):
+        st.session_state.rag_system = load_rag_system()
+        st.success(f"✓ تم تحميل {len(st.session_state.rag_system['texts'])} مقطع من لائحة 2021", icon="✅")
+
+# ==================== واجهة المستخدم الرئيسية ====================
+st.title("🎓 مستشار أكاديمي ذكي - كلية العلوم جامعة حلوان")
+st.markdown("**بناءً على لائحة الساعات المعتمدة 2021 (قرار وزيري رقم 3257)**")
 st.markdown("---")
 
-# تحميل البيانات
-with st.spinner("جاري تحميل النظام..."):
-    data_dict = load_data()
+# تحذير إذا لم يُدخل مفتاح API
+if not gemini_api_key:
+    st.warning("💡 أدخل مفتاح Gemini API في الشريط الجانبي للحصول على إجابات ذكية مولدة تلقائياً", icon="🔑")
 
 # قسم السؤال
-st.subheader("📝 اطرح سؤالك")
+st.subheader("📝 اطرح سؤالك الأكاديمي")
 query = st.text_input(
-    "اكتب سؤالك حول اللائحة الأكاديمية:",
-    placeholder="مثال: ما هي شروط التخرج؟ أو كم عدد الساعات المعتمدة المطلوبة؟",
-    key="question_input"
+    "مثال: كم عدد الساعات المعتمدة للتخرج؟ أو ما هي شروط الالتحاق بقسم الرياضيات؟",
+    placeholder="اكتب سؤالك هنا...",
+    key="user_query"
 )
 
-# زر الإرسال
 col1, col2 = st.columns([1, 5])
 with col1:
-    submit = st.button("بحث 🔍", type="primary", use_container_width=True)
+    submit_btn = st.button("ابحث وأجب 🤖", type="primary", use_container_width=True)
 
 st.markdown("---")
 
-# عرض النتائج
-if submit and query:
+# معالجة السؤال
+if submit_btn and query:
+    # 1. استرجاع المقاطع
     with st.spinner("جاري البحث في اللائحة الأكاديمية..."):
-        results = retrieve(query, k=3)
-        
-        # عرض الإجابة (سيتم تحسينها لاحقاً باستخدام LLM)
-        st.subheader("💡 الإجابة")
-        
-        # دمج النصوص المسترجعة
-        combined_context = "\n\n".join([f"المصدر {i+1}: {r['text']}" for i, r in enumerate(results)])
-        
-        st.info(combined_context[:1000] + "..." if len(combined_context) > 1000 else combined_context)
-        
-        st.markdown("---")
-        
-        # عرض المصادر
-        st.subheader("📚 المصادر المسترجعة")
-        
-        for i, res in enumerate(results, 1):
-            with st.expander(f"المصدر {i} - تشابه: {res['score']:.2%}"):
-                st.write(res['text'])
-                if res['metadata']:
-                    st.caption(f"المصدر: {res['metadata'].get('source', 'غير معروف')}")
+        chunks = retrieve_chunks(query, k=5)
+    
+    # 2. توليد الإجابة عبر Gemini (إذا توفر المفتاح)
+    if gemini_api_key:
+        with st.spinner("جاري توليد الإجابة عبر Gemini..."):
+            answer = generate_answer_gemini(
+                query=query,
+                chunks=chunks,
+                api_key=gemini_api_key,
+                model=gemini_model
+            )
+    else:
+        answer = None
+    
+    # 3. عرض النتائج
+    st.subheader("💡 الإجابة")
+    
+    if answer and gemini_api_key:
+        # عرض الإجابة المولدة
+        # Replace current answer display with this
+        st.markdown(
+            f"""
+                <div style="
+                 background-color:#e8f4f8; 
+                    padding:20px; 
+                     border-radius:12px; 
+                    border-left:4px solid #2196F3;
+                    font-size:18px;
+                    line-height:1.6;
+                    min-height: 100px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                ">
+                 {answer}
+                    </div>
+                    """,
+                 unsafe_allow_html=True
+        )
+    else:
+        # عرض السياق الخام كحل بديل
+        st.info("لم يتم إدخال مفتاح Gemini API. إليك المعلومات ذات الصلة من اللائحة:", icon="ℹ️")
+        for i, chunk in enumerate(chunks[:3], 1):
+            st.markdown(f"**المصدر {i}:** {chunk['text'][:400]}...")
+    
+    # 4. عرض المصادر
+    st.markdown("---")
+    st.subheader("📚 المصادر المسترجعة من اللائحة")
+    
+    for i, chunk in enumerate(chunks, 1):
+        score_pct = f"{chunk['score']*100:.1f}%"
+        with st.expander(f"المصدر {i} (مطابقة: {score_pct})"):
+            st.write(chunk['text'])
+            if chunk['metadata'].get('source'):
+                st.caption(f"المرجع: {chunk['metadata']['source']}")
 
-elif submit and not query:
-    st.warning("⚠️ يرجى كتابة سؤال أولاً")
+elif submit_btn and not query:
+    st.warning("⚠️ يرجى كتابة سؤال قبل البحث")
 
-# قسم الأسئلة الشائعة
+# ==================== أسئلة سريعة ====================
 st.markdown("---")
-st.subheader("❓ أسئلة مقترحة")
-col1, col2, col3 = st.columns(3)
+st.subheader("⚡ أسئلة شائعة من اللائحة")
+quick_questions = [
+    "ما هي شروط التخرج من كلية العلوم؟",
+    "كم عدد الساعات المعتمدة المطلوبة للتخرج؟",
+    "ما هي مقررات المستوى الأول في قسم الرياضيات؟",
+    "كيف يتم حساب المعدل التراكمي؟",
+    "ما هي شروط الالتحاق بالبرنامج المزدوج؟",
+    "ما هي الساعات المعتمدة لمقرر التدريب الميداني؟"
+]
 
-with col1:
-    if st.button("شروط التخرج؟", use_container_width=True):
-        st.session_state.question_input = "ما هي شروط التخرج من كلية العلوم؟"
+for q in quick_questions:
+    if st.button(f"❓ {q}", use_container_width=True):
+        st.session_state.user_query = q
         st.rerun()
 
-with col2:
-    if st.button("الساعات المعتمدة؟", use_container_width=True):
-        st.session_state.question_input = "كم عدد الساعات المعتمدة المطلوبة للتخرج؟"
-        st.rerun()
-
-with col3:
-    if st.button("المتطلبات المسبقة؟", use_container_width=True):
-        st.session_state.question_input = "ما هي المتطلبات المسبقة لمقرر الرياضيات؟"
-        st.rerun()
-
-# معلومات عن النظام
-with st.expander("ℹ️ معلومات عن النظام"):
+# ==================== معلومات النظام ====================
+with st.expander("ℹ️ كيفية الاستخدام"):
     st.markdown("""
-    - **النظام**: مستشار أكاديمي ذكي مبني على الذكاء الاصطناعي
-    - **المصدر**: لائحة الساعات المعتمدة - كلية العلوم جامعة حلوان 2021
-    - **الوظيفة**: البحث في اللائحة الأكاديمية والإجابة على الأسئلة
-    - **ملاحظة**: النظام في مرحلة النموذج الأولي، سيتم تحسينه قريباً
+    ### للحصول على أفضل النتائج:
+    1. **احصل على مفتاح Gemini API** من [Google AI Studio](https://aistudio.google.com/app/apikey)
+    2. **أدخل المفتاح** في الشريط الجانبي
+    3. **اكتب سؤالك** بالعربية الفصحى (مثال: "شروط التخرج من قسم الكيمياء")
+    4. **اضغط "ابحث وأجب"** للحصول على إجابة دقيقة من اللائحة الرسمية
+    
+    ### ملاحظات هامة:
+    - النظام يستخدم **لائحة 2021** المعتمدة بقرار وزيري رقم 3257
+    - الإجابات مبنية فقط على المعلومات الموجودة في اللائحة
+    - `gemini-1.5-flash` أسرع وأرخص، و`gemini-1.5-pro` أكثر دقة
+    
+    > ⚠️ **تنبيه أمان**: لا تشارك مفتاح API مع الآخرين. يُنصح بحفظه كمتغير بيئة:
+    > ```powershell
+    > $env:GOOGLE_API_KEY="your_key_here"
+    > streamlit run app.py
+    > ```
     """)
 
-# ==================== تشغيل التطبيق ====================
-# لتشغيل التطبيق: 
-# احفظ الكود في ملف باسم app.py
-# ثم نفذ الأمر: streamlit run app.py
+# ==================== تذييل الصفحة ====================
+st.markdown("---")
+st.caption("نظام ذكي مبني على RAG + Gemini | كلية العلوم - جامعة حلوان © 2026")
