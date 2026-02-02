@@ -25,7 +25,6 @@ h2 { font-size: 28px !important; }
 """
 
 st.markdown(_STYLES, unsafe_allow_html=True)
-st.set_page_config(page_title="UNIPATH", layout="wide")
 
 # Instantiate back-end systems
 student_sys = StudentRegistrationSystem()
@@ -39,11 +38,14 @@ portal = st.sidebar.selectbox("Choose Portal", ["Student Portal", "Advisor Porta
 REQUESTS_FILE = 'registration_requests.csv'
 
 def safe_rerun():
-    """Force Streamlit rerun with compatibility."""
+    """Force Streamlit rerun with compatibility for all versions."""
     try:
-        st.experimental_rerun()
-    except Exception:
-        st.session_state["_rerun_counter"] = st.session_state.get("_rerun_counter", 0) + 1
+        st.rerun()  # Streamlit >= 1.27
+    except AttributeError:
+        try:
+            st.experimental_rerun()  # Streamlit < 1.27
+        except Exception:
+            pass  # Fallback: page will refresh on next interaction
 
 def append_request(request_row):
     """Safely append request to CSV with validation."""
