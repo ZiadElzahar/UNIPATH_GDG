@@ -31,7 +31,7 @@ advisor_sys = AcademicAdvisorSystem()
 
 st.title("UNIPATH")
 
-portal = st.sidebar.selectbox("Choose Portal", ["Student Portal", "Advisor Portal"]) 
+portal = st.sidebar.selectbox("Choose Portal", ["Student Portal", "Advisor Portal"])
 
 # Helper functions
 REQUESTS_FILE = 'registration_requests.csv'
@@ -46,11 +46,11 @@ def safe_rerun():
 def append_request(request_row):
     """Safely append request to CSV with validation."""
     df_new = pd.DataFrame([request_row])
-    
+
     # Ensure file exists with headers
     if not os.path.exists(REQUESTS_FILE):
         pd.DataFrame(columns=['Request_ID','Student_ID','Student_Name','Advisor_ID','Courses','Timestamp','Status']).to_csv(REQUESTS_FILE, index=False)
-    
+
     try:
         if os.path.exists(REQUESTS_FILE):
             df_existing = pd.read_csv(REQUESTS_FILE, dtype=str)
@@ -91,23 +91,23 @@ def delete_request(request_id, student_id):
     """Delete a pending request ONLY if it belongs to the student and is Pending."""
     if not os.path.exists(REQUESTS_FILE):
         return False, "Requests file not found."
-    
+
     try:
         df = pd.read_csv(REQUESTS_FILE, dtype=str)
         mask = (df['Request_ID'] == str(request_id)) & (df['Student_ID'] == str(student_id))
-        
+
         if not mask.any():
             return False, "Request not found or you are not authorized to delete it."
-        
+
         # Security: Verify student owns this request
         owner_id = df.loc[mask, 'Student_ID'].iloc[0]
         if str(owner_id) != str(student_id):
             return False, "Unauthorized: This request does not belong to you."
-        
+
         status = df.loc[mask, 'Status'].iloc[0]
         if str(status).strip().lower() != 'pending':
             return False, "Cannot delete a request that is not pending."
-        
+
         df = df[~mask]
         df.to_csv(REQUESTS_FILE, index=False)
         return True, f"Request {request_id} deleted successfully."
@@ -118,23 +118,23 @@ def update_request(request_id, student_id, courses):
     """Update a pending request's courses ONLY if it belongs to the student and is Pending."""
     if not os.path.exists(REQUESTS_FILE):
         return False, "Requests file not found."
-    
+
     try:
         df = pd.read_csv(REQUESTS_FILE, dtype=str)
         mask = (df['Request_ID'] == str(request_id)) & (df['Student_ID'] == str(student_id))
-        
+
         if not mask.any():
             return False, "Request not found or you are not authorized to edit it."
-        
+
         # Security: Verify student owns this request
         owner_id = df.loc[mask, 'Student_ID'].iloc[0]
         if str(owner_id) != str(student_id):
             return False, "Unauthorized: This request does not belong to you."
-        
+
         status = df.loc[mask, 'Status'].iloc[0]
         if str(status).strip().lower() != 'pending':
             return False, "Cannot edit a request that is not pending."
-        
+
         df.loc[mask, 'Courses'] = str(courses)
         df.loc[mask, 'Timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         df.to_csv(REQUESTS_FILE, index=False)
@@ -146,23 +146,23 @@ def approve_or_reject_request(request_id, advisor_id, decision, reason=""):
     """Approve or reject a request ONLY if it belongs to advisor's students."""
     if not os.path.exists(REQUESTS_FILE):
         return False, "Requests file not found."
-    
+
     try:
         df = pd.read_csv(REQUESTS_FILE, dtype=str)
         mask = df['Request_ID'] == str(request_id)
-        
+
         if not mask.any():
             return False, "Request not found."
-        
+
         # Security: Verify advisor owns this request's student
         req_advisor = df.loc[mask, 'Advisor_ID'].iloc[0]
         if str(req_advisor) != str(advisor_id):
             return False, "Unauthorized: This request does not belong to your students."
-        
+
         status = df.loc[mask, 'Status'].iloc[0]
         if str(status).strip().lower() != 'pending':
             return False, f"Cannot {decision} a request that is not pending."
-        
+
         df.loc[mask, 'Status'] = decision.capitalize()
         if reason:
             df.loc[mask, 'Reason'] = reason
@@ -175,17 +175,17 @@ def archive_and_clear_requests(archive_dir='data/archives'):
     """Archive the current requests file and recreate empty one."""
     if not os.path.exists(REQUESTS_FILE):
         return False, "No requests file found."
-    
+
     try:
         os.makedirs(archive_dir, exist_ok=True)
         ts = datetime.now().strftime('%Y%m%d_%H%M%S')
         arc_name = os.path.join(archive_dir, f"registration_requests_archive_{ts}.csv")
-        
+
         # Backup before replacing
         if os.path.exists(REQUESTS_FILE):
             import shutil
             shutil.copy2(REQUESTS_FILE, arc_name)
-        
+
         # Recreate empty file
         pd.DataFrame(columns=['Request_ID','Student_ID','Student_Name','Advisor_ID','Courses','Timestamp','Status','Reason']).to_csv(REQUESTS_FILE, index=False)
         return True, f"Archived to {arc_name} and cleared requests."
@@ -198,7 +198,7 @@ def archive_and_clear_requests(archive_dir='data/archives'):
 if portal == "Student Portal":
     st.header("🎓 Student Portal")
     st.write("Login with your Student ID and verification code.")
-    
+
     # Authentication
     if st.session_state.get('student_id') is None:
         with st.form('student_login_form'):
@@ -219,7 +219,7 @@ if portal == "Student Portal":
 
             student = student_sys.all_students[sid_int]
             expected = student_sys.generate_verification_code(student['name'])
-            
+
             if vcode.strip().lower() != expected:
                 st.error(f"❌ Verification failed! Expected code: '{expected}'")
                 st.stop()
@@ -229,13 +229,13 @@ if portal == "Student Portal":
             st.session_state['student_name'] = student['name']
             st.session_state['student_year'] = student['year']
             st.session_state['student_advisor'] = student['advisor_id']
-            
+
             st.success(f"✅ Authentication successful! Welcome, {student['name']}")
             safe_rerun()
 
     else:
         sid_int = st.session_state['student_id']
-        
+
         # Security: Re-validate student exists
         if sid_int not in student_sys.all_students:
             st.error("❌ Session expired. Please login again.")
@@ -243,7 +243,7 @@ if portal == "Student Portal":
             safe_rerun()
 
         student = student_sys.all_students[sid_int]
-        
+
         # Security: Verify session matches current data
         if st.session_state.get('student_name') != student['name']:
             st.warning("⚠️ Session mismatch detected. Please login again.")
@@ -251,7 +251,7 @@ if portal == "Student Portal":
             safe_rerun()
 
         st.success(f"✅ Welcome back, {student['name']} (Year {student['year']})")
-        
+
         # Display student info
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -260,7 +260,7 @@ if portal == "Student Portal":
             st.metric("Payment Status", student['payment'])
         with col3:
             st.metric("CGPA", student['grades'].get('CGPA', 'N/A'))
-        
+
         # Show locked/remaining courses
         locked_info = student['locked_courses'] or '(None)'
         st.info(f"**Locked / Remaining Courses:** {locked_info}")
@@ -273,19 +273,19 @@ if portal == "Student Portal":
         s_requests = get_requests_for_student(sid_int)
         if not s_requests.empty:
             st.subheader("📝 Your Registration Requests")
-            
+
             # Separate by status
             pending_reqs = s_requests[s_requests['Status'].str.strip().str.lower() == 'pending']
             approved_reqs = s_requests[s_requests['Status'].str.strip().str.lower() == 'approved']
             rejected_reqs = s_requests[s_requests['Status'].str.strip().str.lower() == 'rejected']
-            
+
             if not pending_reqs.empty:
                 st.markdown("### ⏳ Pending Requests")
                 for idx, r in pending_reqs.iterrows():
                     rid = r.get('Request_ID', '')
                     courses = r.get('Courses', '')
                     st.markdown(f"**{rid}** — {courses}")
-                    
+
                     col1, col2 = st.columns(2)
                     with col1:
                         if st.button(f"🗑️ Delete {rid}", key=f"delete_{rid}"):
@@ -297,7 +297,7 @@ if portal == "Student Portal":
                                 safe_rerun()
                             else:
                                 st.error(msg)
-                    
+
                     with col2:
                         # Build available courses for editing
                         if student['year'] < 4:
@@ -309,23 +309,23 @@ if portal == "Student Portal":
                                 available = [c.strip() for c in rf.split(',') if c.strip()]
                             else:
                                 available = []
-                        
+
                         # Filter allowed courses
                         allowed = [c for c in available if (not student_sys.is_course_locked(student, c)) and (not student_sys.has_completed_course(student, c))]
-                        
+
                         if allowed:
                             with st.expander(f"✏️ Edit {rid}"):
                                 with st.form(f"edit_form_{rid}"):
                                     existing = [c.strip() for c in str(courses).split(';') if c.strip()]
                                     default_choices = [c for c in existing if c in allowed]
-                                    
+
                                     choices = st.multiselect(
                                         "Select courses to register",
                                         options=allowed,
                                         default=default_choices,
                                         key=f"edit_multiselect_{rid}"
                                     )
-                                    
+
                                     update = st.form_submit_button("💾 Update Request")
                                     if update:
                                         if not choices:
@@ -340,7 +340,7 @@ if portal == "Student Portal":
                                                 st.error(msg)
                         else:
                             st.info("ℹ️ No allowed courses available for editing.")
-            
+
             # Show approved/rejected history
             if not approved_reqs.empty or not rejected_reqs.empty:
                 with st.expander("📋 Request History"):
@@ -348,7 +348,7 @@ if portal == "Student Portal":
                         st.markdown("#### ✅ Approved Requests")
                         for idx, r in approved_reqs.iterrows():
                             st.markdown(f"**{r.get('Request_ID', '')}** — {r.get('Courses', '')} (Approved)")
-                    
+
                     if not rejected_reqs.empty:
                         st.markdown("#### ❌ Rejected Requests")
                         for idx, r in rejected_reqs.iterrows():
@@ -386,7 +386,7 @@ if portal == "Student Portal":
             if completed:
                 with st.expander("✅ Completed Courses (Hidden from selection)"):
                     st.write(completed)
-            
+
             if locked:
                 with st.expander("🔒 Locked Courses (Prerequisites not met)"):
                     st.write(locked)
@@ -396,13 +396,13 @@ if portal == "Student Portal":
 
             if not pending_reqs.empty:
                 st.warning("⚠️ You have a pending request. Please delete or edit it before submitting a new one.")
-                
+
                 # Show pending requests again for easy access
                 for idx, r in pending_reqs.iterrows():
                     rid = r.get('Request_ID', '')
                     courses = r.get('Courses', '')
                     st.markdown(f"**{rid}** — {courses}")
-                    
+
                     col1, col2 = st.columns(2)
                     with col1:
                         if st.button(f"🗑️ Delete {rid}", key=f"pending_delete_{rid}"):
@@ -414,21 +414,21 @@ if portal == "Student Portal":
                                 safe_rerun()
                             else:
                                 st.error(msg)
-                    
+
                     with col2:
                         if allowed:
                             with st.expander(f"✏️ Edit {rid}"):
                                 with st.form(f"pending_edit_form_{rid}"):
                                     existing = [c.strip() for c in str(courses).split(';') if c.strip()]
                                     default_choices = [c for c in existing if c in allowed]
-                                    
+
                                     choices = st.multiselect(
                                         "Select courses",
                                         options=allowed,
                                         default=default_choices,
                                         key=f"pending_edit_{rid}"
                                     )
-                                    
+
                                     update = st.form_submit_button("💾 Update")
                                     if update:
                                         if not choices:
@@ -448,13 +448,13 @@ if portal == "Student Portal":
                 if allowed:
                     with st.form('course_request_form'):
                         st.markdown("### 📝 Submit New Registration Request")
-                        
+
                         choices = st.multiselect(
                             "Select courses to register",
                             options=allowed,
                             help="Choose courses you want to register for this semester"
                         )
-                        
+
                         submit_req = st.form_submit_button("📤 Submit Registration Request")
 
                         if submit_req:
@@ -470,7 +470,7 @@ if portal == "Student Portal":
                                 else:
                                     req_id = f"REQ{datetime.now().strftime('%Y%m%d%H%M%S')}{sid_int}"
                                     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                                    
+
                                     request_row = {
                                         'Request_ID': req_id,
                                         'Student_ID': sid_int,
@@ -481,7 +481,7 @@ if portal == "Student Portal":
                                         'Status': 'Pending',
                                         'Reason': ''
                                     }
-                                    
+
                                     ok = append_request(request_row)
                                     if ok:
                                         st.success(f"✅ Request submitted successfully! ({req_id})")
@@ -519,7 +519,7 @@ elif portal == "Advisor Portal":
             if adrow.empty:
                 st.error("❌ Advisor ID not found in the system!")
                 st.stop()
-            
+
             expected = int(adrow['Student_Count'].values[0])
             if avcode_int != expected:
                 st.error(f"❌ Verification failed! Expected code: {expected}")
@@ -529,34 +529,34 @@ elif portal == "Advisor Portal":
             st.session_state['advisor_id'] = aid_int
             st.session_state['advisor_name'] = adrow['Advisor_Name'].values[0]
             st.session_state['advisor_count'] = expected
-            
+
             # Set backend context
             advisor_sys.current_advisor = {
-                'id': aid_int, 
-                'name': st.session_state['advisor_name'], 
+                'id': aid_int,
+                'name': st.session_state['advisor_name'],
                 'student_count': expected
             }
-            
+
             st.success(f"✅ Logged in successfully! Welcome, Dr. {st.session_state['advisor_name']}")
             safe_rerun()
 
     else:
         aid_int = st.session_state['advisor_id']
-        
+
         # Security: Re-validate advisor exists
         adrow = advisor_sys.advisors_df[advisor_sys.advisors_df['Advisor_ID'] == aid_int]
         if adrow.empty:
             st.error("❌ Session expired. Please login again.")
             st.session_state.clear()
             safe_rerun()
-        
+
         adname = st.session_state.get('advisor_name', '')
         st.success(f"✅ Welcome back, Dr. {adname}")
-        
+
         # Ensure backend context is set
         advisor_sys.current_advisor = {
-            'id': aid_int, 
-            'name': adname, 
+            'id': aid_int,
+            'name': adname,
             'student_count': st.session_state.get('advisor_count', 0)
         }
 
@@ -568,7 +568,7 @@ elif portal == "Advisor Portal":
 
         # Advisor actions
         option = st.selectbox(
-            "Choose action", 
+            "Choose action",
             ["📊 Overview Dashboard", "👥 Student List", "⚠️ Generate Risk Report", "📝 Manage Requests", "📤 Export Student List"]
         )
 
@@ -576,12 +576,12 @@ elif portal == "Advisor Portal":
 
         if option == "📊 Overview Dashboard":
             st.subheader("Dashboard Overview")
-            
+
             if students_df.empty:
                 st.info("ℹ️ No students assigned to you.")
             else:
                 col1, col2, col3, col4 = st.columns(4)
-                
+
                 with col1:
                     st.metric("Total Students", len(students_df))
                 with col2:
@@ -612,14 +612,14 @@ elif portal == "Advisor Portal":
                 bars = ax2.bar(payment_counts.index, payment_counts.values, color=colors, edgecolor='black')
                 ax2.set_title('Payment Status Overview', fontsize=14, fontweight='bold')
                 ax2.set_ylabel('Number of Students')
-                
+
                 # Add value labels on bars
                 for bar in bars:
                     height = bar.get_height()
                     ax2.text(bar.get_x() + bar.get_width()/2., height,
                             f'{int(height)}',
                             ha='center', va='bottom', fontweight='bold')
-                
+
                 ax2.grid(axis='y', alpha=0.3)
                 st.pyplot(fig2)
 
@@ -629,40 +629,40 @@ elif portal == "Advisor Portal":
 
         elif option == "👥 Student List":
             st.subheader("Your Students")
-            
+
             if students_df.empty:
                 st.info("ℹ️ No students assigned to you.")
             else:
                 # Display summary
                 st.metric("Total Students", len(students_df))
-                
+
                 # Search/filter
                 search_name = st.text_input("Search by name (optional)", placeholder="e.g., Mohamed")
-                
+
                 if search_name:
                     filtered_df = students_df[students_df['Name'].str.contains(search_name, case=False, na=False)]
                     st.write(f"Found {len(filtered_df)} student(s)")
                     display_df = filtered_df
                 else:
                     display_df = students_df
-                
+
                 # Display students
                 st.dataframe(display_df, use_container_width=True)
-                
+
                 # View individual student profile
                 st.markdown("### 👤 View Student Profile")
                 sid_view = st.text_input("Enter Student ID to view detailed profile", placeholder="e.g., 352300071")
-                
+
                 if sid_view:
                     try:
                         sidv = int(sid_view)
                         student_row = students_df[students_df['Student_ID'] == sidv]
-                        
+
                         if not student_row.empty:
                             student_data = student_row.iloc[0]
-                            
+
                             st.markdown(f"### 📋 Profile: {student_data['Name']} (ID: {sidv})")
-                            
+
                             col1, col2, col3 = st.columns(3)
                             with col1:
                                 st.metric("Academic Year", student_data.get('Academic_Year', 'N/A'))
@@ -678,7 +678,7 @@ elif portal == "Advisor Portal":
                                     st.metric("Locked Courses", locked_count)
                                 else:
                                     st.metric("Locked Courses", 0)
-                            
+
                             # Show attendance warnings
                             attendance_issues = []
                             for col in student_data.index:
@@ -690,12 +690,12 @@ elif portal == "Advisor Portal":
                                             attendance_issues.append(f"{course_name}: {av:.0f}%")
                                     except:
                                         pass
-                            
+
                             if attendance_issues:
                                 st.warning("⚠️ **Low Attendance Courses:**")
                                 for issue in attendance_issues:
                                     st.write(f"- {issue}")
-                            
+
                         else:
                             st.error("❌ Student not found in your group")
                     except ValueError:
@@ -703,28 +703,28 @@ elif portal == "Advisor Portal":
 
         elif option == "⚠️ Generate Risk Report":
             st.subheader("⚠️ AT-RISK STUDENTS REPORT")
-            
+
             if students_df.empty:
                 st.info("ℹ️ No students to analyze")
             else:
                 risk_list = []
                 for _, r in students_df.iterrows():
                     factors = []
-                    
+
                     # CGPA risk
                     if r['CGPA'] < 2.0:
                         factors.append(f"🔴 Low CGPA ({r['CGPA']:.2f})")
-                    
+
                     # Payment risk
                     if r['Payment_Status'] == 'Unpaid':
                         factors.append("🔴 Unpaid fees")
-                    
+
                     # Locked courses
                     if pd.notna(r.get('Locked_Courses')) and r.get('Locked_Courses') not in ['None', '']:
                         locked_count = len([c.strip() for c in str(r.get('Locked_Courses')).split(',') if c.strip()])
                         if locked_count > 3:
                             factors.append(f"🔴 Multiple locked courses ({locked_count})")
-                    
+
                     # Attendance risk
                     attendance_risk = False
                     for col in r.index:
@@ -737,7 +737,7 @@ elif portal == "Advisor Portal":
                                     break
                             except:
                                 pass
-                    
+
                     if factors:
                         risk_list.append({
                             'ID': r['Student_ID'],
@@ -751,7 +751,7 @@ elif portal == "Advisor Portal":
                     st.success("✅ No at-risk students identified. All students are performing adequately!")
                 else:
                     st.metric("⚠️ Total At-Risk Students", len(risk_list))
-                    
+
                     for s_r in risk_list:
                         with st.expander(f"⚠️ {s_r['Name']} (ID: {s_r['ID']}) — CGPA: {s_r['CGPA']:.2f}"):
                             for f in s_r['Risks']:
@@ -759,11 +759,11 @@ elif portal == "Advisor Portal":
 
         elif option == "📝 Manage Requests":
             st.subheader("📝 Pending Registration Requests")
-            
+
             if os.path.exists(REQUESTS_FILE):
                 # Security: Only get requests for THIS advisor's students
                 all_reqs = get_requests_for_advisor(aid_int)
-                
+
                 if all_reqs.empty:
                     st.info("ℹ️ No requests found for your students.")
                 else:
@@ -771,16 +771,16 @@ elif portal == "Advisor Portal":
                     pending = all_reqs[all_reqs['Status'].str.strip().str.lower() == 'pending']
                     approved = all_reqs[all_reqs['Status'].str.strip().str.lower() == 'approved']
                     rejected = all_reqs[all_reqs['Status'].str.strip().str.lower() == 'rejected']
-                    
+
                     # Show pending requests
                     if not pending.empty:
                         st.markdown("### ⏳ Pending Requests")
                         st.metric("Pending Requests", len(pending))
-                        
+
                         for idx, row in pending.iterrows():
                             with st.container():
                                 st.markdown(f"#### 📄 Request {row['Request_ID']}")
-                                
+
                                 col1, col2, col3 = st.columns(3)
                                 with col1:
                                     st.write(f"**Student:** {row['Student_Name']}")
@@ -788,9 +788,9 @@ elif portal == "Advisor Portal":
                                     st.write(f"**ID:** {row['Student_ID']}")
                                 with col3:
                                     st.write(f"**Date:** {row['Timestamp']}")
-                                
+
                                 st.write(f"**Courses:** {row['Courses']}")
-                                
+
                                 col_a, col_b = st.columns(2)
                                 with col_a:
                                     if st.button(f"✅ Approve", key=f"approve_{row['Request_ID']}"):
@@ -800,7 +800,7 @@ elif portal == "Advisor Portal":
                                             safe_rerun()
                                         else:
                                             st.error(f"❌ {msg}")
-                                
+
                                 with col_b:
                                     with st.expander(f"❌ Reject with Reason"):
                                         reason = st.text_area(
@@ -818,9 +818,9 @@ elif portal == "Advisor Portal":
                                                     safe_rerun()
                                                 else:
                                                     st.error(f"❌ {msg}")
-                                
+
                                 st.markdown("---")
-                    
+
                     # Show history
                     if not approved.empty or not rejected.empty:
                         with st.expander("📋 Request History"):
@@ -828,22 +828,51 @@ elif portal == "Advisor Portal":
                                 st.markdown("#### ✅ Approved Requests")
                                 st.metric("Approved", len(approved))
                                 st.dataframe(approved[['Request_ID', 'Student_Name', 'Courses', 'Timestamp']])
-                            
+
                             if not rejected.empty:
                                 st.markdown("#### ❌ Rejected Requests")
                                 st.metric("Rejected", len(rejected))
                                 st.dataframe(rejected[['Request_ID', 'Student_Name', 'Courses', 'Timestamp', 'Reason']])
-            else:
-                st.info('ℹ️ No requests file found')
+                    # ADD THE ADMIN CONTROL PANEL HERE
+        # ============================================
+        else:
+            st.info('ℹ️ No requests file found')
 
-        elif option == "📤 Export Student List":
+        # System maintenance panel (admin only)
+        with st.expander("🛠️ System Maintenance (Admin Only)"):
+            st.warning("⚠️ These actions affect all users")
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                if st.button("🧹 Clear Data Cache"):
+                    st.cache_data.clear()
+                    st.cache_resource.clear()
+                    st.success("✅ Caches cleared")
+                    safe_rerun()
+
+            with col2:
+                if st.button("👤 Clear All Sessions"):
+                    st.session_state.clear()
+                    st.success("✅ All user sessions cleared")
+                    safe_rerun()
+
+            with col3:
+                confirm = st.checkbox("Confirm archive action", key="confirm_maintenance")
+                if confirm and st.button("🗃️ Archive Requests"):
+                    ok, msg = archive_and_clear_requests()
+                    if ok:
+                        st.success(msg)
+                        safe_rerun()
+                    else:
+                        st.error(msg)
             st.subheader("📤 Export Student Data")
-            
+
             if students_df.empty:
                 st.info("ℹ️ No students to export")
             else:
                 st.metric("Students to Export", len(students_df))
-                
+
                 # Select columns to export
                 all_cols = list(students_df.columns)
                 default_cols = ['Student_ID', 'Name', 'Academic_Year', 'Payment_Status', 'CGPA', 'Advisor_ID']
@@ -852,21 +881,21 @@ elif portal == "Advisor Portal":
                     options=all_cols,
                     default=[c for c in default_cols if c in all_cols]
                 )
-                
+
                 if selected_cols:
                     export_df = students_df[selected_cols]
-                    
+
                     # Export button
                     csv = export_df.to_csv(index=False)
                     fname = f"advisor_{aid_int}_students_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-                    
+
                     st.download_button(
                         label="📥 Download CSV File",
                         data=csv,
                         file_name=fname,
                         mime="text/csv"
                     )
-                    
+
                     st.success(f"✅ File ready for download: `{fname}`")
                 else:
                     st.warning("⚠️ Please select at least one column to export")
