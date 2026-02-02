@@ -6,6 +6,9 @@ from datetime import datetime
 from student_submitions import StudentRegistrationSystem
 from advisor_sys import AcademicAdvisorSystem
 
+# MUST be first Streamlit command
+st.set_page_config(page_title="UNIPATH", layout="wide")
+
 # Accessibility CSS: larger fonts, bigger buttons, high-contrast
 _STYLES = """
 <style>
@@ -22,7 +25,6 @@ h2 { font-size: 28px !important; }
 """
 
 st.markdown(_STYLES, unsafe_allow_html=True)
-
 st.set_page_config(page_title="UNIPATH", layout="wide")
 
 # Instantiate back-end systems
@@ -394,8 +396,21 @@ if portal == "Student Portal":
             # Check for pending requests
             pending_reqs = s_requests[s_requests['Status'].str.strip().str.lower() == 'pending'] if not s_requests.empty else pd.DataFrame()
 
-            if not pending_reqs.empty:
-                st.warning("⚠️ You have a pending request. Please delete or edit it before submitting a new one.")
+            # Check for approved requests
+            approved_reqs_block = s_requests[s_requests['Status'].str.strip().str.lower() == 'approved'] if not s_requests.empty else pd.DataFrame()
+
+            if not approved_reqs_block.empty:
+                st.success("✅ Your registration has been approved! You cannot submit another request.")
+                st.markdown("### 🎉 Approved Registration")
+                for idx, r in approved_reqs_block.iterrows():
+                    rid = r.get('Request_ID', '')
+                    courses = r.get('Courses', '')
+                    timestamp = r.get('Timestamp', '')
+                    st.markdown(f"**{rid}** — Courses: {courses}")
+                    st.caption(f"Approved on: {timestamp}")
+
+            elif not pending_reqs.empty:
+                st.warning("⚠️ You have a pending request. Please wait for approval or delete/edit it.")
 
                 # Show pending requests again for easy access
                 for idx, r in pending_reqs.iterrows():
@@ -444,7 +459,7 @@ if portal == "Student Portal":
                         else:
                             st.info("ℹ️ No allowed courses available for editing.")
             else:
-                # No pending requests - allow new submission
+                # No pending or accepted requests - allow new submission
                 if allowed:
                     with st.form('course_request_form'):
                         st.markdown("### 📝 Submit New Registration Request")
@@ -834,38 +849,10 @@ elif portal == "Advisor Portal":
                                 st.metric("Rejected", len(rejected))
                                 st.dataframe(rejected[['Request_ID', 'Student_Name', 'Courses', 'Timestamp', 'Reason']])
                     # ADD THE ADMIN CONTROL PANEL HERE
+            else:
+                st.info('ℹ️ No requests found for your students')
         # ============================================
-        else:
-            st.info('ℹ️ No requests file found')
-
-        # System maintenance panel (admin only)
-        with st.expander("🛠️ System Maintenance (Admin Only)"):
-            st.warning("⚠️ These actions affect all users")
-
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-                if st.button("🧹 Clear Data Cache"):
-                    st.cache_data.clear()
-                    st.cache_resource.clear()
-                    st.success("✅ Caches cleared")
-                    safe_rerun()
-
-            with col2:
-                if st.button("👤 Clear All Sessions"):
-                    st.session_state.clear()
-                    st.success("✅ All user sessions cleared")
-                    safe_rerun()
-
-            with col3:
-                confirm = st.checkbox("Confirm archive action", key="confirm_maintenance")
-                if confirm and st.button("🗃️ Archive Requests"):
-                    ok, msg = archive_and_clear_requests()
-                    if ok:
-                        st.success(msg)
-                        safe_rerun()
-                    else:
-                        st.error(msg)
+        elif option == "📤 Export Student List":
             st.subheader("📤 Export Student Data")
 
             if students_df.empty:
@@ -899,6 +886,49 @@ elif portal == "Advisor Portal":
                     st.success(f"✅ File ready for download: `{fname}`")
                 else:
                     st.warning("⚠️ Please select at least one column to export")
+
+        # System maintenance panel (admin only)
+        with st.expander("🛠️ System Maintenance (Admin Only)"):
+            st.warning("⚠️ These actions affect all users")
+
+            col1, col2, col3, col4 = st.columns(4)
+
+            with col1:
+                if st.button("🧹 Clear Data Cache"):
+                    st.cache_data.clear()
+                    st.cache_resource.clear()
+                    st.success("✅ Caches cleared")
+                    safe_rerun()
+
+            with col2:
+                if st.button("👤 Clear All Sessions"):
+                    st.session_state.clear()
+                    st.success("✅ All user sessions cleared")
+                    safe_rerun()
+
+            with col3:
+                confirm_archive = st.checkbox("Confirm archive", key="confirm_archive")
+                if confirm_archive and st.button("🗃️ Archive Requests"):
+                    ok, msg = archive_and_clear_requests()
+                    if ok:
+                        st.success(msg)
+                        safe_rerun()
+                    else:
+                        st.error(msg)
+
+            with col4:
+                confirm_delete = st.checkbox("Confirm delete ALL", key="confirm_delete_all")
+                if confirm_delete and st.button("🗑️ Delete All Requests"):
+                    try:
+                        if os.path.exists(REQUESTS_FILE):
+                            os.remove(REQUESTS_FILE)
+                            pd.DataFrame(columns=['Request_ID','Student_ID','Student_Name','Advisor_ID','Courses','Timestamp','Status','Reason']).to_csv(REQUESTS_FILE, index=False)
+                            st.success("✅ All requests deleted and file reset")
+                            safe_rerun()
+                        else:
+                            st.info("No requests file to delete")
+                    except Exception as e:
+                        st.error(f"Failed to delete: {e}")
 
 # Footer
 st.markdown("---")
