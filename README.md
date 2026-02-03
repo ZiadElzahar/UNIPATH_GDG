@@ -335,7 +335,9 @@ pip install faiss-gpu
 
 **3. Streamlit Port Already in Use**
 ```bash
-streamlit run app.py --server.port 8503
+streamlit run streamlit_app.py --server.port 8503
+# or
+streamlit run rag_streamlit.py --server.port 8504
 ```
 
 **4. Arabic Text Display Issues**
