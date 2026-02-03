@@ -1,2 +1,30 @@
+# Data files
 rag_dataset_fixed.json
 registration_requests.csv
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Environment
+.env
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Cache files
+*.npy
+rag_data/cache/
+
+# OS files
+.DS_Store
+Thumbs.db

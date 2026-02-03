@@ -13,23 +13,17 @@ st.set_page_config(
     layout="wide"
 )
 
-# ==================== إعدادات Gemini API (في الشريط الجانبي) ====================
+# ==================== إعدادات Groq API (في الشريط الجانبي) ====================
+GROQ_API_KEY = "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"
+groq_api_key = GROQ_API_KEY  # استخدام المفتاح مباشرة
+
 with st.sidebar:
-    st.title("⚙️ إعدادات Gemini")
-    
-    # إدخال مفتاح API
-    gemini_api_key = st.text_input(
-        "مفتاح Google AI Studio API:",
-        type="password",
-        value=os.environ.get("GOOGLE_API_KEY", ""),
-        help="احصل على مفتاح من: https://aistudio.google.com/app/apikey"
-    )
-    #AIzaSyCT2FlqNMst9D18XYj_yhJK-bRzoJOJtpg
+    st.title("⚙️ الإعدادات")
 
     # اختيار النموذج
-    gemini_model = st.selectbox(
-        "اختر نموذج Gemini:",
-        ["gemini-2.5-flash"],
+    groq_model = st.selectbox(
+        "اختر نموذج الذكاء الاصطناعي:",
+        ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it"],
         index=0
     )
     
@@ -105,8 +99,8 @@ def retrieve_chunks(query, k=5):
         })
     return results
 
-# ==================== دالة توليد الإجابة عبر Gemini ====================
-def generate_answer_gemini(query, chunks, api_key, model="gemini-1.5-flash"):
+# ==================== دالة توليد الإجابة عبر Groq ====================
+def generate_answer_groq(query, chunks, api_key, model="llama-3.3-70b-versatile"):
     # تنسيق السياق من المقاطع المسترجعة (مع تحديد الطول لتجنب تجاوز الحد)
     context = "\n\n".join([
         f"[مصدر {i+1}] {chunk['text'][:1000]}"  # حد 1000 حرف لكل مقطع
@@ -114,40 +108,43 @@ def generate_answer_gemini(query, chunks, api_key, model="gemini-1.5-flash"):
     ])
     
     # صياغة البرومبت المحسّن للعربية ولائحة جامعة حلوان
-    prompt = f"""أنت مستشار أكاديمي خبير في لائحة الساعات المعتمدة لكلية العلوم بجامعة حلوان (اللائحة المعتمدة بقرار وزير التعليم العالي رقم 3257 لسنة 2021).
-
-المعلومات المرجعية من اللائحة الأكاديمية:
-{context}
-
-السؤال:
-{query}
+    system_prompt = """أنت مستشار أكاديمي خبير في لائحة الساعات المعتمدة لكلية العلوم بجامعة حلوان (اللائحة المعتمدة بقرار وزير التعليم العالي رقم 3257 لسنة 2021).
 
 تعليمات هامة:
-1. استند فقط على المعلومات المرجعية أعلاه
+1. استند فقط على المعلومات المرجعية المقدمة
 2. إذا لم تجد إجابة كافية، قل: "لم أجد معلومات كافية في اللائحة الأكاديمية الحالية"
-3. كن دقيقاً وواضحاً ومختصراً 
+3. كن دقيقاً وواضحاً ومختصراً
 4. لا تختلق معلومات خارج السياق المقدم
+5. أجب باللغة العربية"""
+    
+    user_prompt = f"""المعلومات المرجعية من اللائحة الأكاديمية:
+{context}
+
+السؤال: {query}
 
 الإجابة:"""
 
     try:
-        # استدعاء Gemini API
-        url = f"https://generativelanguage.googleapis.com/v1/models/{model}:generateContent?key={api_key}"
+        # استدعاء Groq API (OpenAI compatible)
+        url = "https://api.groq.com/openai/v1/chat/completions"
         
         payload = {
-            "contents": [{
-                "parts": [{"text": prompt}]
-            }],
-            "generationConfig": {
-                "temperature": 0.2,
-                "maxOutputTokens": 800,
-                "topP": 0.9
-            }
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            "temperature": 0.2,
+            "max_tokens": 1000,
+            "top_p": 0.9
         }
         
         response = requests.post(
             url,
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}"
+            },
             json=payload,
             timeout=30
         )
@@ -156,21 +153,21 @@ def generate_answer_gemini(query, chunks, api_key, model="gemini-1.5-flash"):
         result = response.json()
         
         # استخراج النص من الاستجابة
-        if "candidates" in result and len(result["candidates"]) > 0:
-            return result["candidates"][0]["content"]["parts"][0]["text"].strip()
+        if "choices" in result and len(result["choices"]) > 0:
+            return result["choices"][0]["message"]["content"].strip()
         else:
             return "⚠️ لم يتم توليد إجابة من النموذج (استجابة فارغة)"
     
     except requests.exceptions.RequestException as e:
         error_msg = str(e)
         if "400" in error_msg:
-            return "❌ خطأ: طلب غير صالح (قد يكون المفتاح غير صحيح)"
-        elif "403" in error_msg:
-            return "❌ خطأ: مفتاح API غير مصرح به أو منتهي الصلاحية"
+            return "❌ خطأ: طلب غير صالح"
+        elif "401" in error_msg or "403" in error_msg:
+            return "❌ خطأ: مفتاح API غير صحيح أو منتهي الصلاحية"
         elif "429" in error_msg:
             return "⚠️ تم تجاوز حد الاستخدام. يرجى المحاولة لاحقاً."
         else:
-            return f"⚠️ خطأ في الاتصال بـ Gemini: {str(e)[:150]}"
+            return f"⚠️ خطأ في الاتصال بـ Groq: {str(e)[:150]}"
     except Exception as e:
         return f"⚠️ خطأ غير متوقع: {str(e)[:150]}"
 
@@ -184,10 +181,6 @@ if 'rag_system' not in st.session_state:
 st.title("🎓 مستشار أكاديمي ذكي - كلية العلوم جامعة حلوان")
 st.markdown("**بناءً على لائحة الساعات المعتمدة 2021 (قرار وزيري رقم 3257)**")
 st.markdown("---")
-
-# تحذير إذا لم يُدخل مفتاح API
-if not gemini_api_key:
-    st.warning("💡 أدخل مفتاح Gemini API في الشريط الجانبي للحصول على إجابات ذكية مولدة تلقائياً", icon="🔑")
 
 # قسم السؤال
 st.subheader("📝 اطرح سؤالك الأكاديمي")
@@ -209,14 +202,14 @@ if submit_btn and query:
     with st.spinner("جاري البحث في اللائحة الأكاديمية..."):
         chunks = retrieve_chunks(query, k=5)
     
-    # 2. توليد الإجابة عبر Gemini (إذا توفر المفتاح)
-    if gemini_api_key:
-        with st.spinner("جاري توليد الإجابة عبر Gemini..."):
-            answer = generate_answer_gemini(
+    # 2. توليد الإجابة عبر Groq (إذا توفر المفتاح)
+    if groq_api_key:
+        with st.spinner("جاري توليد الإجابة عبر Groq..."):
+            answer = generate_answer_groq(
                 query=query,
                 chunks=chunks,
-                api_key=gemini_api_key,
-                model=gemini_model
+                api_key=groq_api_key,
+                model=groq_model
             )
     else:
         answer = None
@@ -224,31 +217,28 @@ if submit_btn and query:
     # 3. عرض النتائج
     st.subheader("💡 الإجابة")
     
-    if answer and gemini_api_key:
+    if answer and groq_api_key:
         # عرض الإجابة المولدة
-        # Replace current answer display with this
         st.markdown(
             f"""
-                <div style="
-                 background-color:#e8f4f8; 
-                    padding:20px; 
-                     border-radius:12px; 
-                    border-left:4px solid #2196F3;
-                    font-size:18px;
-                    line-height:1.6;
-                    min-height: 100px;
-                    max-height: 80vh;
-                    overflow-y: auto;
-                    overflow-x: hidden;
-                ">
-                 {answer}
-                    </div>
-                    """,
-                 unsafe_allow_html=True
+            <div style="
+                background-color:#e8f4f8; 
+                padding:20px; 
+                border-radius:12px; 
+                border-right:4px solid #2196F3;
+                font-size:18px;
+                line-height:1.8;
+                direction: rtl;
+                text-align: right;
+            ">
+                {answer}
+            </div>
+            """,
+            unsafe_allow_html=True
         )
     else:
         # عرض السياق الخام كحل بديل
-        st.info("لم يتم إدخال مفتاح Gemini API. إليك المعلومات ذات الصلة من اللائحة:", icon="ℹ️")
+        st.info("لم يتم إدخال مفتاح Groq API. إليك المعلومات ذات الصلة من اللائحة:", icon="ℹ️")
         for i, chunk in enumerate(chunks[:3], 1):
             st.markdown(f"**المصدر {i}:** {chunk['text'][:400]}...")
     
@@ -287,7 +277,7 @@ for q in quick_questions:
 with st.expander("ℹ️ كيفية الاستخدام"):
     st.markdown("""
     ### للحصول على أفضل النتائج:
-    1. **احصل على مفتاح Gemini API** من [Google AI Studio](https://aistudio.google.com/app/apikey)
+    1. **احصل على مفتاح Groq API** من [Groq Console](https://console.groq.com/keys)
     2. **أدخل المفتاح** في الشريط الجانبي
     3. **اكتب سؤالك** بالعربية الفصحى (مثال: "شروط التخرج من قسم الكيمياء")
     4. **اضغط "ابحث وأجب"** للحصول على إجابة دقيقة من اللائحة الرسمية
@@ -295,15 +285,12 @@ with st.expander("ℹ️ كيفية الاستخدام"):
     ### ملاحظات هامة:
     - النظام يستخدم **لائحة 2021** المعتمدة بقرار وزيري رقم 3257
     - الإجابات مبنية فقط على المعلومات الموجودة في اللائحة
-    - `gemini-1.5-flash` أسرع وأرخص، و`gemini-1.5-pro` أكثر دقة
+    - **Groq** سريع جداً ومجاني مع حدود استخدام يومية
+    - `llama-3.3-70b-versatile` الأكثر دقة، و`llama-3.1-8b-instant` الأسرع
     
-    > ⚠️ **تنبيه أمان**: لا تشارك مفتاح API مع الآخرين. يُنصح بحفظه كمتغير بيئة:
-    > ```powershell
-    > $env:GOOGLE_API_KEY="your_key_here"
-    > streamlit run app.py
-    > ```
+    > ⚠️ **تنبيه أمان**: لا تشارك مفتاح API مع الآخرين.
     """)
 
 # ==================== تذييل الصفحة ====================
 st.markdown("---")
-st.caption("نظام ذكي مبني على RAG + Gemini | كلية العلوم - جامعة حلوان © 2026")
+st.caption("نظام ذكي مبني على RAG + Groq (Llama 3.3) | كلية العلوم - جامعة حلوان © 2026")

@@ -1,0 +1,24 @@
+# RAG System Dependencies
+# Install with: pip install -r requirements_rag.txt
+
+# Core ML/Embedding
+sentence-transformers>=2.2.0
+faiss-cpu>=1.7.4  # Use faiss-gpu if you have CUDA
+torch>=2.0.0
+numpy>=1.24.0
+
+# PDF Processing
+PyMuPDF>=1.23.0
+
+# Web Interface
+streamlit>=1.28.0
+
+# LLM Clients (optional - install what you need)
+openai>=1.0.0  # For OpenAI GPT
+google-generativeai>=0.3.0  # For Google Gemini
+# transformers>=4.35.0  # For local HuggingFace models
+
+# Utilities
+pandas>=2.0.0
+scikit-learn>=1.3.0
+tqdm>=4.65.0
