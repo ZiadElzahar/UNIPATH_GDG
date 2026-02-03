@@ -375,13 +375,22 @@ if portal == "Student Portal":
             available = student_sys.get_available_courses(target_year)
             st.subheader(f"📚 Available Courses for Registration (Year {target_year})")
         else:
+            # 4th Year Students - Check remaining courses
             rf = student['locked_courses']
             if rf and rf.strip() and 'none' not in rf.lower() and 'ready to graduate' not in rf.lower():
                 available = [c.strip() for c in rf.split(',') if c.strip()]
-                st.subheader("📚 Remaining Courses Available for Registration")
+                if available:
+                    st.subheader("📚 Remaining Courses Available for Registration")
+                else:
+                    available = []
+                    st.balloons()
+                    st.success("🎉 Congratulations! You have completed all your courses and are ready to graduate!")
+                    st.info("📜 Please contact the administration office to complete your graduation procedures.")
             else:
                 available = []
-                st.info("ℹ️ No courses available for registration.")
+                st.balloons()
+                st.success("🎉 Congratulations! You have completed all your courses and are ready to graduate!")
+                st.info("📜 Please contact the administration office to complete your graduation procedures.")
 
         # Filter courses
         if available:
@@ -390,7 +399,7 @@ if portal == "Student Portal":
             completed = [c for c in available if student_sys.has_completed_course(student, c)]
 
             if completed:
-                with st.expander("✅ Completed Courses (Hidden from selection)"):
+                with st.expander("📋 Remaining Courses"):
                     st.write(completed)
 
             if locked:
