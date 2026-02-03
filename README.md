@@ -20,8 +20,8 @@
 
 UNIPATH is a dual-purpose academic management platform designed for **Helwan University - Faculty of Science**. The system consists of two main applications:
 
-1. **Student & Advisor Portal** (`streamlit_app.py`) - Complete registration and academic advising system
-2. **RAG Academic Assistant** (`rag_streamlit.py`) - AI-powered Q&A system for academic regulations
+1. **Student & Advisor Portal** (`unipath_run.py`) - Complete registration and academic advising system
+2. **RAG Academic Assistant** (`rag_app.py`) - AI-powered Q&A system for academic regulations
 
 ---
 
@@ -33,13 +33,17 @@ UNIPATH is a dual-purpose academic management platform designed for **Helwan Uni
 - **Request Management** - View, edit, and delete pending registration requests
 - **Payment Status Tracking** - Check payment status before registration
 - **Graduation Eligibility** - Automatic detection of graduation-ready students
+- **🎉 Graduation Celebration** - Animated bubbles and confetti for Year 4 graduates
+- **Year 4 Smart Logic** - Remaining courses registration, unpaid fees warning, or graduation celebration
 
 ### 👨‍🏫 Advisor Portal
 - **Advisor Authentication** - Secure login with student count verification
-- **Request Approval System** - Review, approve, or reject student requests
+- **Request Approval System** - Review, approve, or reject student requests with reasons
 - **Student Analytics** - View assigned students with grades visualization
-- **Performance Dashboard** - Charts and statistics for student performance
+- **Performance Dashboard** - Side-by-side CGPA distribution and payment status charts
+- **At-Risk Reports** - Generate reports for students with low GPA, attendance, or unpaid fees
 - **Request Archival** - Archive and clear processed requests
+- **Student Export** - Export student data to CSV with custom column selection
 
 ### 🤖 RAG Academic Assistant (Arabic/English)
 - **Intelligent Q&A** - Ask questions about academic regulations in Arabic
@@ -111,23 +115,23 @@ matplotlib>=3.7.0
 
 ### Running the Student & Advisor Portal
 ```bash
-streamlit run streamlit_app.py
+streamlit run unipath_run.py
 ```
 **Default URL:** `http://localhost:8501`
 
 ### Running the RAG Academic Assistant
 ```bash
-streamlit run rag_streamlit.py
+streamlit run rag_app.py
 ```
 **Default URL:** `http://localhost:8502`
 
 ### Running Both Applications
 ```bash
 # Terminal 1
-streamlit run streamlit_app.py --server.port 8501
+streamlit run unipath_run.py --server.port 8501
 
 # Terminal 2
-streamlit run rag_streamlit.py --server.port 8502
+streamlit run rag_app.py --server.port 8502
 ```
 
 ---
@@ -137,11 +141,15 @@ streamlit run rag_streamlit.py --server.port 8502
 ### Project Structure
 ```
 UNIPATH_GDG/
-├── 📄 streamlit_app.py        # Main Student & Advisor Portal
-├── 📄 rag_streamlit.py        # RAG Academic Assistant Interface
+├── 📄 unipath_run.py          # Main Student & Advisor Portal
+├── 📄 rag_app.py              # RAG Academic Assistant Interface
 ├── 📄 advisor_sys.py          # Academic Advisor System Logic
 ├── 📄 student_submitions.py   # Student Registration System Logic
+├── 📄 campusbrain_run.py      # CampusBrain Application
+├── 📄 test_rag.py             # RAG System Tests
 ├── 📄 requirements_rag.txt    # Python Dependencies
+├── 📄 rag_dataset_fixed.json  # Academic regulations dataset
+├── 📄 registration_requests.csv # Student registration requests
 │
 ├── 📁 data/                   # Data Files
 │   ├── academic_advisors.csv  # Advisor information
@@ -151,6 +159,7 @@ UNIPATH_GDG/
 │   ├── Year_3_Students.csv    # Third year students
 │   ├── Year_4_Students.csv    # Fourth year students
 │   ├── rag_dataset_fixed.json # Academic regulations dataset
+│   ├── datafix.py             # Data fixing utilities
 │   └── loaders.py             # Data loading utilities
 │
 ├── 📁 rag_system/             # RAG System Components
@@ -279,7 +288,7 @@ Response with Sources
 
 ### Configuration Options
 ```python
-# In rag_streamlit.py
+# In rag_app.py
 GEMINI_API_KEY = "your-api-key"  # Or set as environment variable
 MODEL = "gemini-2.0-flash"       # Gemini model version
 ```
@@ -290,7 +299,7 @@ MODEL = "gemini-2.0-flash"       # Gemini model version
 
 ### Gemini API Setup
 1. Get API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Set the key in `rag_streamlit.py` or as environment variable:
+2. Set the key in `rag_app.py` or as environment variable:
 ```bash
 export GEMINI_API_KEY="your-api-key"
 ```
@@ -303,11 +312,14 @@ export GEMINI_API_KEY="your-api-key"
 - Course registration interface
 - Request status tracking
 - Payment verification
+- 🎉 Graduation celebration with animated bubbles
 
 ### Advisor Portal
-- Request approval dashboard
-- Student analytics
-- Performance charts
+- Request approval dashboard with rejection reasons
+- Student analytics with search functionality
+- Side-by-side CGPA and payment charts
+- At-risk student reports
+- CSV export functionality
 
 ### RAG Assistant
 - Arabic language Q&A interface
@@ -335,9 +347,9 @@ pip install faiss-gpu
 
 **3. Streamlit Port Already in Use**
 ```bash
-streamlit run streamlit_app.py --server.port 8503
+streamlit run unipath_run.py --server.port 8503
 # or
-streamlit run rag_streamlit.py --server.port 8504
+streamlit run rag_app.py --server.port 8504
 ```
 
 **4. Arabic Text Display Issues**
