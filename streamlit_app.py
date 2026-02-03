@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt  
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import os
 from datetime import datetime
 from student_submitions import StudentRegistrationSystem
