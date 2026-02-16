@@ -1023,4 +1023,3 @@ elif portal == "Advisor Portal":
 # Footer
 st.markdown("---")
 st.markdown("**© 2026 UNIPATH University Registration System**")
-st.caption("🔒 Secure • Accessible • Student-Focused")

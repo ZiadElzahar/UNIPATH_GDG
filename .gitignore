@@ -28,3 +28,7 @@ rag_data/cache/
 # OS files
 .DS_Store
 Thumbs.db
+presentaion/presntation.html
+presentaion/rag_svg.svg
+benchmark_results.json
+benchmark_rag.py

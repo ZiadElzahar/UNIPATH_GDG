@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ==================== إعدادات Groq API (في الشريط الجانبي) ====================
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 groq_api_key = GROQ_API_KEY  # استخدام المفتاح مباشرة
 
 with st.sidebar:
