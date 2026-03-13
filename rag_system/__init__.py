@@ -1,16 +1,21 @@
-# RAG System for Helwan University Academic Regulations
-from .pdf_processor import PDFProcessor
-from .chunker import SemanticChunker
-from .embeddings import EmbeddingModel
-from .vector_store import FAISSVectorStore
-from .retriever import RAGRetriever
-from .rag_pipeline import RAGPipeline
+"""Backward-compatible shim to canonical src.unipath.rag package."""
+
+from src.unipath.rag import (  # noqa: F401
+    EmbeddingModel,
+    FAISSVectorStore,
+    PDFProcessor,
+    RAGPipeline,
+    RAGRetriever,
+    RAGSystemBuilder,
+    SemanticChunker,
+)
 
 __all__ = [
-    'PDFProcessor',
-    'SemanticChunker', 
-    'EmbeddingModel',
-    'FAISSVectorStore',
-    'RAGRetriever',
-    'RAGPipeline'
+    "PDFProcessor",
+    "SemanticChunker",
+    "EmbeddingModel",
+    "FAISSVectorStore",
+    "RAGRetriever",
+    "RAGPipeline",
+    "RAGSystemBuilder",
 ]

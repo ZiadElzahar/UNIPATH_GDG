@@ -1,34 +1,46 @@
-# Data files
-rag_dataset_fixed.json
-registration_requests.csv
-
-# Python cache
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-*.pyo
+*.so
 
-# Environment
-.env
+# Virtual environments
 .venv/
 venv/
 env/
 
-# IDE
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# IDE/editor
 .vscode/
 .idea/
+
+# Testing and coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
 
 # Jupyter
 .ipynb_checkpoints/
 
-# Cache files
-*.npy
-rag_data/cache/
-
 # OS files
 .DS_Store
 Thumbs.db
-presentaion/presntation.html
-presentaion/rag_svg.svg
+
+# Build and generated artifacts
+artifacts/
+rag_data/cache/
+rag_data/vector_store/
+rag_data_test/
 benchmark_results.json
-benchmark_rag.py
+
+# Python packaging
+dist/
+build/
+*.egg-info/

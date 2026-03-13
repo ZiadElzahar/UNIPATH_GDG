@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIPATH: Academic Registration System</title>
+    <style>
+        :root {
+            --primary: #1a3a6c;
+            --secondary: #2e5da3;
+            --accent: #e63946;
+            --light: #f8f9fa;
+            --dark: #0f172a;
+            --darker: #0a0f1d;
+            --card-bg: #1e293b;
+            --card-hover: #2d3748;
+            --text-primary: #e2e8f0;
+            --text-secondary: #cbd5e1;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --border: #334155;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .presentation {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .slide {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            padding: 40px;
+            margin-bottom: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid var(--border);
+        }
+        
+        .slide:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+        
+        .slide-title {
+            color: var(--secondary);
+            font-size: 2.8rem;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--primary);
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.8rem;
+            margin: 15px 0 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .team-section {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .team-title {
+            color: var(--secondary);
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .team-members {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .team-member {
+            background: rgba(46, 93, 163, 0.15);
+            padding: 20px 30px;
+            border-radius: 12px;
+            min-width: 180px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+        
+        .team-member:hover {
+            background: rgba(46, 93, 163, 0.25);
+            transform: translateY(-3px);
+        }
+        
+        .team-member h3 {
+            color: var(--text-primary);
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+        }
+        
+        .quick-overview {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .overview-card {
+            background: linear-gradient(145deg, var(--card-bg), #2a3749);
+            border-radius: 14px;
+            padding: 25px;
+            text-align: center;
+            border-top: 4px solid var(--secondary);
+            box-shadow: 0 6px 15px rgba(74, 111, 165, 0.2);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+        }
+        
+        .overview-card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 25px rgba(74, 111, 165, 0.35);
+            background: linear-gradient(145deg, #2a3749, var(--card-bg));
+        }
+        
+        .overview-card h3 {
+            color: var(--text-primary);
+            margin: 15px 0 12px;
+            font-size: 1.6rem;
+        }
+        
+        .overview-card .number {
+            font-size: 3.2rem;
+            font-weight: 800;
+            color: var(--secondary);
+            display: block;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border-left: 5px solid var(--secondary);
+            border: 1px solid var(--border);
+        }
+        
+        .feature-card.student {
+            border-left-color: #4ade80;
+        }
+        
+        .feature-card.advisor {
+            border-left-color: #ff6b6b;
+        }
+        
+        .feature-card.security {
+            border-left-color: #64748b;
+        }
+        
+        .feature-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .workflow {
+            display: flex;
+            justify-content: space-between;
+            margin: 40px 0;
+            position: relative;
+        }
+        
+        .workflow::before {
+            content: '';
+            position: absolute;
+            top: 45px;
+            left: 10%;
+            width: 80%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            z-index: 1;
+            border-radius: 2px;
+        }
+        
+        .workflow-step {
+            text-align: center;
+            width: 18%;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: var(--secondary);
+            color: var(--dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            border: 4px solid var(--card-bg);
+            box-shadow: 0 4px 15px rgba(74, 111, 165, 0.4);
+            transition: transform 0.3s ease;
+        }
+        
+        .workflow-step:hover .step-number {
+            transform: scale(1.1);
+            background: var(--primary);
+            color: white;
+        }
+        
+        .step-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-size: 1.2rem;
+        }
+        
+        .security-highlights {
+            background: linear-gradient(135deg, #0c1427 0%, #0a0f1d 100%);
+            color: var(--text-primary);
+            border-radius: 16px;
+            padding: 40px;
+            margin: 40px 0;
+            border: 1px solid var(--primary);
+            box-shadow: 0 10px 30px rgba(10, 15, 29, 0.6);
+        }
+        
+        .security-highlights .slide-title {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent);
+        }
+        
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .security-item {
+            background: rgba(30, 41, 59, 0.6);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+        }
+        
+        .security-item h3 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 1.4rem;
+            color: var(--text-primary);
+        }
+        
+        .stats-bar {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 35px 0;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            min-width: 150px;
+        }
+        
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--secondary);
+            line-height: 1;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-label {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 20px;
+            color: var(--text-secondary);
+            font-size: 1.3rem;
+            border-top: 2px solid var(--border);
+        }
+        
+        .university-badge {
+            text-align: center;
+            margin: 25px 0;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+        }
+        
+        .university-badge h3 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+            font-size: 1.6rem;
+        }
+        
+        .badge-content {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .badge-item {
+            background: var(--primary);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 8px rgba(74, 111, 165, 0.3);
+        }
+        
+        ul {
+            color: var(--text-secondary);
+        }
+        
+        li {
+            margin-bottom: 8px;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        li:before {
+            content: "";
+            color: var(--secondary);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.4rem;
+        }
+        
+        p {
+            color: var(--text-secondary);
+        }
+        
+        @media (max-width: 768px) {
+            .slide {
+                padding: 25px;
+            }
+            
+            .slide-title {
+                font-size: 2.2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.5rem;
+            }
+            
+            .team-members {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .workflow {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .workflow::before {
+                display: none;
+            }
+            
+            .workflow-step {
+                width: 100%;
+                margin-bottom: 30px;
+            }
+            
+            .stats-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .stat-number {
+                font-size: 2.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        <!-- Slide 1: Team -->
+        <section class="slide">
+            <h1 class="slide-title">UNIPATH</h1>
+            <div class="subtitle">Academic Registration & Advisor System</div>
+            
+            <div class="team-section">
+                <h2 class="team-title">OUR TEAM</h2>
+                <div class="team-members">
+                    <div class="team-member">
+                        <h3>Ziad Ali</h3> 
+                    </div>
+                    <div class="team-member">
+                        <h3>Hassan Ali</h3>
+                    </div>
+                    <div class="team-member">
+                        <h3>Maryam Ashraf</h3>
+                    </div>
+                    <div class="team-member">
+                        <h3>Anourine Walid</h3>
+                        
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 2: Quick Overview -->
+        <section class="slide">
+            <h2 class="slide-title">System Overview</h2>
+            <div class="quick-overview">
+                <div class="overview-card">
+                    <span class="number">1</span>
+                    <h3>Dual Portal System</h3>
+                    <p>Separate secure portals for students and academic advisors with role-based access control</p>
+                </div>
+                <div class="overview-card">
+                    <span class="number">2</span>
+                    <h3>Smart Registration</h3>
+                    <p>Real-time validation against prerequisites, locked courses, and graduation eligibility</p>
+                </div>
+                <div class="overview-card">
+                    <span class="number">3</span>
+                    <h3>AI-Powered Advisor</h3>
+                    <p>RAG-based chatbot trained on Helwan University's 2021 Credit Hour Regulations</p>
+                </div>
+                <div class="overview-card">
+                    <span class="number">4</span>
+                    <h3>Zero Infrastructure</h3>
+                    <p>Streamlit web interface with CSV persistence - no database or server setup required</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: Core Features -->
+        <section class="slide">
+            <h2 class="slide-title">✨ Key Capabilities</h2>
+            
+            <div class="feature-grid">
+                <div class="feature-card student">
+                    <h3>🎓 Student Experience</h3>
+                    <ul style="margin-top: 15px;">
+                        <li><strong>Secure Login:</strong> Student ID + name-based verification code</li>
+                        <li><strong>Graduation Protection:</strong> Blocks Year 4 "Ready to Graduate" students</li>
+                        <li><strong>Multi-Course Registration:</strong> Select multiple courses with real-time validation</li>
+                        <li><strong>Request Management:</strong> View, edit, or delete pending requests</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card advisor">
+                    <h3>👨‍🏫 Advisor Tools</h3>
+                    <ul style="margin-top: 15px;">
+                        <li><strong>Analytics Dashboard:</strong> CGPA distribution, payment status, attendance risk</li>
+                        <li><strong>Request Workflow:</strong> One-click approval/rejection with justification</li>
+                        <li><strong>Risk Detection:</strong> Automated identification of at-risk students</li>
+                        <li><strong>Data Export:</strong> CSV export with custom column selection</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card security">
+                    <h3>🤖 AI Integration</h3>
+                    <ul style="margin-top: 15px;">
+                        <li><strong>RAG Chatbot:</strong> Answers academic questions using official regulations</li>
+                        <li><strong>Regulation Compliance:</strong> Trained on Decision No. 3257/2021</li>
+                        <li><strong>Context-Aware:</strong> Provides precise answers with source references</li>
+                        <li><strong>Arabic Support:</strong> Full Arabic language processing capabilities</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: Compliance -->
+        <section class="security-highlights">
+            <h2 class="slide-title">🛡️Regulatory Compliance</h2>
+            <div class="security-grid">
+                <div class="security-item">
+                    <h3>🔐 Data Isolation</h3>
+                    <p>Students can ONLY access their own requests. Advisors can ONLY manage their assigned students.</p>
+                </div>
+                <div class="security-item">
+                    <h3>📜 Ministry Compliance</h3>
+                    <p>Fully compliant with Helwan University Credit Hour System (Decision No. 3257/2021).</p>
+                </div>
+                <div class="security-item">
+                    <h3>💾 Persistent Audit Trail</h3>
+                    <p>All actions timestamped in CSV files with modification tracking and status history.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 5: Technical Architecture -->
+        <section class="slide">
+            <h2 class="slide-title">⚙️ Technical Implementation</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>Frontend</h3>
+                    <p style="margin-top: 15px;"><strong>Streamlit</strong> - Responsive web interface with accessibility features (large fonts, high contrast)</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Backend</h3>
+                    <p style="margin-top: 15px;"><strong>Modular Python</strong> - Separate systems for student registration and advisor management</p>
+                </div>
+                <div class="feature-card">
+                    <h3>AI Engine</h3>
+                    <p style="margin-top: 15px;"><strong>RAG Pipeline</strong> - SentenceTransformer embeddings + FAISS indexing + LLM integration</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Data Layer</h3>
+                    <p style="margin-top: 15px;"><strong>CSV Persistence</strong> - Human-readable format compatible with existing university systems</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 6: GitHub Repository -->
+        <section class="slide">
+            <h2 class="slide-title">💻 Project Repository</h2>
+            <div class="quick-overview">
+                <div class="overview-card">
+                    <span class="number">📁</span>
+                    <h3>Complete Source Code</h3>
+                    <p>All modules: student registration, advisor system, RAG pipeline, and Streamlit interface</p>
+                </div>
+                <div class="overview-card">
+                    <span class="number">📚</span>
+                    <h3>Documentation</h3>
+                    <p>Comprehensive README with setup instructions, usage examples, and system architecture</p>
+                </div>
+                <div class="overview-card">
+                    <span class="number">🧪</span>
+                    <h3>Tested Data</h3>
+                    <p>Sample datasets for all 4 academic years with realistic student scenarios</p>
+                </div>
+                <div class="overview-card">
+                    <span class="number">🔗</span>
+                    <h3>Live Demo Ready</h3>
+                    <p>One-command deployment with Streamlit - ready for immediate testing</p>
+                </div>
+            </div>
+            
+            <div class="university-badge" style="margin-top: 40px; background: rgba(255, 107, 107, 0.1); border-color: var(--accent);">
+                <h3 style="color: var(--accent);">GitHub Repository</h3>
+                <p style="margin-top: 15px; font-size: 1.25rem; max-width: 800px; margin-left: auto; margin-right: auto;">
+                    <strong>github.com/ZiadElzahar/UNIPATH_GDG</strong>
+                </p>
+            </div>
+        </section>
+
+        <div class="footer">
+            <p>UNIPATH Academic Registration System • Faculty of Science, Helwan University • 2026</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,6 +1,4 @@
-"""Backward-compatible shim to src.unipath.data_access."""
-
-from src.unipath.data_access import (
+from .loaders import (
     academic_advisors,
     doctors_data,
     year_1_students,

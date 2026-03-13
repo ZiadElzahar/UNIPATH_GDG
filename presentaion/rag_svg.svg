@@ -1,0 +1,64 @@
+<svg width="600" height="420" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#0a0f1d" rx="16"/>
+  
+  <!-- Title -->
+  <text x="300" y="40" text-anchor="middle" font-family="Segoe UI, sans-serif" 
+        font-size="20" font-weight="600" fill="#6b8cbc">UNIPATH RAG System Performance</text>
+  
+  <!-- Table Header -->
+  <rect x="40" y="60" width="520" height="35" fill="#0c1427" rx="8"/>
+  <line x1="40" y1="95" x2="560" y2="95" stroke="#334155"/>
+  <text x="60" y="84" font-family="Segoe UI, sans-serif" font-size="14" 
+        font-weight="700" fill="#cbd5e1">Metric</text>
+  <text x="380" y="84" font-family="Segoe UI, sans-serif" font-size="14" 
+        font-weight="700" fill="#cbd5e1">Value</text>
+  
+  <!-- Row 1: Keyword Accuracy -->
+  <text x="60" y="125" font-family="Segoe UI, sans-serif" font-size="14" fill="#e2e8f0">
+    <tspan font-weight="700">Keyword Accuracy</tspan>
+  </text>
+  <text x="380" y="125" font-family="Segoe UI, sans-serif" font-size="14" fill="#6b8cbc" font-weight="700">56.7%</text>
+  <text x="380" y="142" font-family="Segoe UI, sans-serif" font-size="12" fill="#94a3b8">(5 exact, 6 partial, 4 miss out of 15)</text>
+  
+  <!-- Row 2: Avg Query Latency -->
+  <text x="60" y="175" font-family="Segoe UI, sans-serif" font-size="14" fill="#e2e8f0">
+    <tspan font-weight="700">Avg Query Latency</tspan>
+  </text>
+  <text x="380" y="175" font-family="Segoe UI, sans-serif" font-size="14" fill="#6b8cbc" font-weight="700">45.4 ms</text>
+  <text x="380" y="192" font-family="Segoe UI, sans-serif" font-size="12" fill="#94a3b8">(P50: 26.6 ms, P95: 82.6 ms)</text>
+  
+  <!-- Row 3: Avg Confidence -->
+  <text x="60" y="225" font-family="Segoe UI, sans-serif" font-size="14" fill="#e2e8f0">
+    <tspan font-weight="700">Avg Confidence</tspan>
+  </text>
+  <text x="380" y="225" font-family="Segoe UI, sans-serif" font-size="14" fill="#6b8cbc" font-weight="700">0.506</text>
+  
+  <!-- Row 4: Corpus -->
+  <text x="60" y="265" font-family="Segoe UI, sans-serif" font-size="14" fill="#e2e8f0">
+    <tspan font-weight="700">Corpus</tspan>
+  </text>
+  <text x="380" y="265" font-family="Segoe UI, sans-serif" font-size="14" fill="#6b8cbc" font-weight="700">510 chunks</text>
+  <text x="380" y="282" font-family="Segoe UI, sans-serif" font-size="14" fill="#6b8cbc" font-weight="700">101K words</text>
+  <text x="380" y="299" font-family="Segoe UI, sans-serif" font-size="14" fill="#6b8cbc" font-weight="700">384-dim embeddings</text>
+  
+  <!-- Row 5: Vector Store -->
+  <text x="60" y="340" font-family="Segoe UI, sans-serif" font-size="14" fill="#e2e8f0">
+    <tspan font-weight="700">Vector Store</tspan>
+  </text>
+  <text x="380" y="340" font-family="Segoe UI, sans-serif" font-size="14" fill="#6b8cbc" font-weight="700">1.63 MB</text>
+  <text x="380" y="357" font-family="Segoe UI, sans-serif" font-size="12" fill="#94a3b8">(FAISS cosine + keyword reranking)</text>
+  
+  <!-- Row 6: Cold Start -->
+  <text x="60" y="395" font-family="Segoe UI, sans-serif" font-size="14" fill="#e2e8f0">
+    <tspan font-weight="700">Cold Start</tspan>
+  </text>
+  <text x="380" y="395" font-family="Segoe UI, sans-serif" font-size="14" fill="#6b8cbc" font-weight="700">~15 seconds</text>
+  <text x="380" y="412" font-family="Segoe UI, sans-serif" font-size="12" fill="#94a3b8">(model loading)</text>
+  
+  <!-- Footer -->
+  <text x="300" y="455" text-anchor="middle" font-family="Segoe UI, sans-serif" 
+        font-size="11" fill="#94a3b8" font-style="italic">
+    Evaluated on Helwan University Faculty of Science Credit Hour Regulations (2021) • UNIPATH v2.1
+  </text>
+</svg>

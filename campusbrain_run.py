@@ -5,6 +5,7 @@ import os
 import requests
 from sentence_transformers import SentenceTransformer
 import faiss
+from pathlib import Path
 
 # ==================== إعداد الصفحة ====================
 st.set_page_config(
@@ -14,8 +15,7 @@ st.set_page_config(
 )
 
 # ==================== إعدادات Groq API (في الشريط الجانبي) ====================
-GROQ_API_KEY = "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"
-groq_api_key = GROQ_API_KEY  # استخدام المفتاح مباشرة
+groq_api_key = os.getenv("GROQ_API_KEY", "")
 
 with st.sidebar:
     st.title("⚙️ الإعدادات")
@@ -33,10 +33,11 @@ with st.sidebar:
 # ==================== تحميل نظام RAG ====================
 @st.cache_resource
 def load_rag_system():
+    repo_root = Path(__file__).resolve().parent
     # البحث عن ملف البيانات
     possible_paths = [
-        "rag_dataset_fixed.json",
-        os.path.join(os.path.dirname(__file__), "rag_dataset_fixed.json"),
+        str(repo_root / "data" / "rag_dataset_fixed.json"),
+        str(repo_root / "rag_dataset_fixed.json"),
         os.path.join(os.getcwd(), "rag_dataset_fixed.json"),
     ]
     
@@ -238,7 +239,7 @@ if submit_btn and query:
         )
     else:
         # عرض السياق الخام كحل بديل
-        st.info("لم يتم إدخال مفتاح Groq API. إليك المعلومات ذات الصلة من اللائحة:", icon="ℹ️")
+        st.info("لم يتم إدخال GROQ_API_KEY. إليك المعلومات ذات الصلة من اللائحة:", icon="ℹ️")
         for i, chunk in enumerate(chunks[:3], 1):
             st.markdown(f"**المصدر {i}:** {chunk['text'][:400]}...")
     

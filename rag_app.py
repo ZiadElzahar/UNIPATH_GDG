@@ -18,7 +18,7 @@ def build_rag_system_from_existing_json():
     """
     Build RAG system from existing rag_dataset_fixed.json
     """
-    from rag_system import RAGSystemBuilder
+    from src.unipath.rag import RAGSystemBuilder
     
     json_path = DATA_DIR / "rag_dataset_fixed.json"
     
@@ -49,7 +49,7 @@ def build_rag_system_from_pdf():
     """
     Build RAG system directly from PDF file.
     """
-    from rag_system import RAGSystemBuilder
+    from src.unipath.rag import RAGSystemBuilder
     
     if not PDF_PATH.exists():
         print(f"PDF file not found at {PDF_PATH}")
@@ -76,10 +76,10 @@ def load_existing_rag_system():
     """
     Load a previously built RAG system.
     """
-    from rag_system.embeddings import EmbeddingModel
-    from rag_system.vector_store import FAISSVectorStore
-    from rag_system.retriever import RAGRetriever
-    from rag_system.rag_pipeline import RAGPipeline
+    from src.unipath.rag.embeddings import EmbeddingModel
+    from src.unipath.rag.vector_store import FAISSVectorStore
+    from src.unipath.rag.retriever import RAGRetriever
+    from src.unipath.rag.rag_pipeline import RAGPipeline
     
     vector_store_path = RAG_DATA_DIR / "vector_store"
     

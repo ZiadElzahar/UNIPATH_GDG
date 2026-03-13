@@ -18,7 +18,7 @@ def test_pdf_extraction():
     print("Testing PDF Extraction")
     print("=" * 60)
     
-    from rag_system.pdf_processor import PDFProcessor
+    from src.unipath.rag.pdf_processor import PDFProcessor
     
     pdf_path = Path(__file__).parent / "data" / "لائحة الساعات المعتمدة كلية العلوم جامعة حلوان 2021 النسخة النهائية للقرار الوزارى.pdf"
     
@@ -45,7 +45,7 @@ def test_chunking():
     print("Testing Text Chunking")
     print("=" * 60)
     
-    from rag_system.chunker import SemanticChunker, create_rag_dataset
+    from src.unipath.rag.chunker import SemanticChunker, create_rag_dataset
     
     sample_text = """
     مادة (1): نظام الدراسة
@@ -75,7 +75,7 @@ def test_embeddings():
     print("Testing Embeddings")
     print("=" * 60)
     
-    from rag_system.embeddings import EmbeddingModel
+    from src.unipath.rag.embeddings import EmbeddingModel
     
     model = EmbeddingModel('multilingual-minilm')
     model.load_model()
@@ -106,8 +106,8 @@ def test_vector_store():
     print("Testing Vector Store")
     print("=" * 60)
     
-    from rag_system.embeddings import EmbeddingModel
-    from rag_system.vector_store import FAISSVectorStore
+    from src.unipath.rag.embeddings import EmbeddingModel
+    from src.unipath.rag.vector_store import FAISSVectorStore
     
     # Create embeddings
     model = EmbeddingModel('multilingual-minilm')
@@ -146,9 +146,9 @@ def test_retrieval():
     print("Testing Retrieval Pipeline")
     print("=" * 60)
     
-    from rag_system.embeddings import EmbeddingModel
-    from rag_system.vector_store import FAISSVectorStore
-    from rag_system.retriever import RAGRetriever
+    from src.unipath.rag.embeddings import EmbeddingModel
+    from src.unipath.rag.vector_store import FAISSVectorStore
+    from src.unipath.rag.retriever import RAGRetriever
     
     # Load existing data
     data_path = Path(__file__).parent / "data" / "rag_dataset_fixed.json"
@@ -196,7 +196,7 @@ def test_full_pipeline():
     print("Testing Full RAG Pipeline")
     print("=" * 60)
     
-    from rag_system.rag_pipeline import RAGSystemBuilder
+    from src.unipath.rag.rag_pipeline import RAGSystemBuilder
     
     data_path = Path(__file__).parent / "data" / "rag_dataset_fixed.json"
     rag_data_dir = Path(__file__).parent / "rag_data_test"
