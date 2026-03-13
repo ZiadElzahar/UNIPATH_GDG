@@ -1,167 +1,208 @@
-# UNIPATH GDG
+<div align="center">
 
-UNIPATH GDG is a Python-based academic platform for university workflows and academic regulations assistance.
+# 🎓 UNIPATH GDG
 
-The repository contains:
-- A Streamlit portal for student registration requests and advisor operations.
-- A Retrieval-Augmented Generation (RAG) assistant for academic regulation Q&A.
-- Supporting benchmark and test scripts for RAG quality and latency.
+**An intelligent academic platform for university workflows & Arabic regulation Q&A**
 
-## Features
+[![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-UI-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![FAISS](https://img.shields.io/badge/FAISS-Vector%20Search-0078D7?style=for-the-badge)](https://faiss.ai/)
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey?style=for-the-badge)](https://creativecommons.org/licenses/by-nc/4.0/)
 
-- Student portal authentication and registration request submission.
-- Advisor portal authentication, request review, and student analytics.
-- Risk reporting based on CGPA, attendance, and payment indicators.
-- Arabic-focused RAG retrieval pipeline using semantic chunking and FAISS.
-- Optional LLM integrations through pluggable client interfaces.
-- Benchmark tooling for retrieval quality, confidence, and latency metrics.
+</div>
 
-## Tech Stack
+---
 
-- Language: Python 3.8+
-- UI: Streamlit
-- Data: Pandas, CSV, JSON
-- Retrieval: FAISS, sentence-transformers
-- Visualization: Matplotlib
-- Optional LLM Providers: OpenAI, Google Gemini, Ollama, Hugging Face
+## 📖 About
 
-## Project Structure
+**UNIPATH GDG** is a Python-based academic platform built for Helwan University that bridges the gap between students, advisors, and university regulations — all in one place.
+
+| Component | Description |
+|-----------|-------------|
+| 🏫 **Student Portal** | Login, browse courses, and submit registration requests to your advisor |
+| 🧑‍🏫 **Advisor Portal** | Review & approve/reject student requests, visualize student analytics |
+| 🤖 **CampusBrain RAG** | Arabic-first AI assistant for academic regulation Q&A powered by FAISS + LLMs |
+
+---
+
+## ✨ Features
+
+- 🔐 **Secure authentication** for both students and academic advisors
+- 📋 **Course registration workflow** with advisor approval pipeline
+- 📊 **Risk reporting** based on CGPA, attendance, and payment status
+- 🧠 **Semantic RAG pipeline** with Arabic-optimized chunking and FAISS vector search
+- 🔌 **Pluggable LLM backends** — OpenAI, Gemini, Groq, Ollama, Hugging Face
+- 📈 **Benchmark tooling** for retrieval quality, confidence, and latency
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Language | Python 3.8+ |
+| UI | Streamlit |
+| Data | Pandas, CSV, JSON |
+| Vector Search | FAISS |
+| Embeddings | sentence-transformers |
+| Visualization | Matplotlib |
+| LLM Providers | OpenAI · Google Gemini · Groq · Ollama · Hugging Face |
+
+---
+
+## 📁 Project Structure
 
 ```text
 UNIPATH_GDG/
-├── apps/
-│   ├── portal/app.py
-│   ├── rag_cli/main.py
-│   └── rag_streamlit/app.py
-├── src/
-│   └── unipath/
-│       ├── data_access/
-│       ├── portal/
-│       └── rag/
-├── scripts/
-│   └── benchmark_rag.py
-├── tests/
+├── 📦 apps/
+│   ├── portal/app.py          # Student & Advisor portal entrypoint
+│   ├── rag_cli/main.py        # RAG CLI assistant
+│   └── rag_streamlit/app.py   # CampusBrain Streamlit UI
+│
+├── 🧩 src/unipath/
+│   ├── data_access/           # Centralized CSV loaders
+│   ├── portal/                # Student & Advisor business logic
+│   └── rag/                   # Full RAG pipeline (chunker, embeddings, FAISS, LLM)
+│
+├── 🧪 tests/
 │   └── test_rag.py
-├── data/
-├── rag_data/
-├── unipath_run.py
-├── rag_app.py
-├── campusbrain_run.py
-├── requirements_rag.txt
-└── README.md
+├── ⚙️  scripts/
+│   └── benchmark_rag.py
+├── 📂 data/                   # Student & advisor CSV datasets
+├── 🗄️  rag_data/               # FAISS index & embedding cache
+├── unipath_run.py             # Legacy portal entrypoint
+├── campusbrain_run.py         # Legacy RAG Streamlit entrypoint
+├── rag_app.py                 # Legacy RAG CLI entrypoint
+└── requirements_rag.txt
 ```
 
-Note:
-- Root scripts remain available for backward compatibility.
-- New package code lives under src/unipath.
+> **Note:** Root scripts remain for backward compatibility. Canonical code lives under `src/unipath/`.
 
-## Installation
+---
 
-1. Clone repository:
+## 🚀 Getting Started
+
+### 1. Clone the repository
 
 ```bash
 git clone <your-repo-url>
 cd UNIPATH_GDG
 ```
 
-2. Create and activate a virtual environment:
+### 2. Create a virtual environment
 
 ```bash
 # Windows
 python -m venv .venv
 .venv\Scripts\activate
 
-# Linux/macOS
+# Linux / macOS
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-3. Install dependencies:
+### 3. Install dependencies
 
 ```bash
 pip install -r requirements_rag.txt
 ```
 
-## Usage
+---
 
-Run student/advisor Streamlit portal:
+## ▶️ Usage
+
+### 🏫 Student / Advisor Portal
 
 ```bash
 streamlit run unipath_run.py
+# or
+streamlit run apps/portal/app.py
 ```
 
-Run RAG CLI assistant:
-
-```bash
-python rag_app.py
-```
-
-Run RAG Streamlit assistant:
+### 🤖 CampusBrain RAG (Streamlit)
 
 ```bash
 streamlit run campusbrain_run.py
-```
-
-Run refactored entrypoints:
-
-```bash
-streamlit run apps/portal/app.py
-python apps/rag_cli/main.py
+# or
 streamlit run apps/rag_streamlit/app.py
 ```
 
-Run tests and benchmark:
+### 💻 RAG CLI
 
 ```bash
-python test_rag.py
-python benchmark_rag.py
+python rag_app.py
+# or
+python apps/rag_cli/main.py
+```
 
-# refactored wrappers
+### 🧪 Tests & Benchmarks
+
+```bash
 python tests/test_rag.py
 python scripts/benchmark_rag.py
 ```
 
-VS Code task runner:
+### ⚡ VS Code Task Runner
 
-```text
-Run Task -> Portal: Streamlit
-Run Task -> RAG CLI
-Run Task -> RAG Streamlit
-Run Task -> Run RAG Tests
-Run Task -> Run Benchmark
-```
+Open the Command Palette → **Tasks: Run Task** and choose:
 
-Tasks are defined in `.vscode/tasks.json`.
+| Task | Description |
+|------|-------------|
+| `Portal: Streamlit` | Launch the student/advisor portal |
+| `RAG Streamlit` | Launch CampusBrain UI |
+| `RAG CLI` | Run the CLI assistant |
+| `Run RAG Tests` | Execute the test suite |
+| `Run Benchmark` | Run RAG benchmarks |
 
-## Environment Variables
+> Tasks are defined in `.vscode/tasks.json`.
 
-Create a local .env file (or export in your shell) for optional provider integrations:
+---
+
+## 🔑 Environment Variables
+
+Create a `.env` file (or export in your shell) before running the RAG apps:
 
 ```env
-GROQ_API_KEY=
-OPENAI_API_KEY=
-GOOGLE_API_KEY=
+GROQ_API_KEY=your_groq_key_here
+OPENAI_API_KEY=your_openai_key_here
+GOOGLE_API_KEY=your_google_key_here
 ```
 
-Important:
-- Do not hardcode API keys in source files.
-- Do not commit .env files.
+> ⚠️ **Never hardcode API keys in source files. Never commit `.env` to version control.**
 
-## Contributing
+---
 
-1. Create a branch for your change.
-2. Keep changes focused and atomic.
-3. Run tests/benchmarks for modified components.
-4. Update documentation for behavior or structure changes.
-5. Open a pull request with a clear summary and validation notes.
+## 🤝 Contributing
 
-Suggested branch naming:
-- feat/<feature-name>
-- fix/<bug-name>
-- chore/<maintenance-task>
+Contributions are welcome! Please follow these steps:
 
-## License
+1. 🍴 Fork the repository and create a new branch
+2. 🎯 Keep changes focused and atomic
+3. 🧪 Run tests/benchmarks for modified components
+4. 📝 Update docs for behavior or structure changes
+5. 🔃 Open a pull request with a clear summary
 
-This project is licensed under the [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) License.
-Non-commercial use only. See [LICENSE](LICENSE) for full terms.
-Contact: ziad.elzahar05@gmail.com
+**Branch naming convention:**
+
+```
+feat/<feature-name>
+fix/<bug-description>
+chore/<maintenance-task>
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** License —
+free to share and adapt for **non-commercial use only**.
+
+See [LICENSE](LICENSE) for full terms.
+
+📧 Contact: [ziad.elzahar05@gmail.com](mailto:ziad.elzahar05@gmail.com)
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ by the UNIPATH GDG Team · Helwan University · 2026</sub>
+</div>
