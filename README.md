@@ -162,5 +162,6 @@ Suggested branch naming:
 
 ## License
 
-This project is licensed under the MIT License.
-See [LICENSE](LICENSE).
+This project is licensed under the [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) License.
+Non-commercial use only. See [LICENSE](LICENSE) for full terms.
+Contact: ziad.elzahar05@gmail.com
